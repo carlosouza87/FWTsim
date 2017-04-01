@@ -1,0 +1,17 @@
+' Time step
+dt
+0.125
+' Initial time
+ti
+0
+' Final time
+tf
+2000
+' Initial positions
+eta0
+' surge pitch
+   -20    0
+' Initial velocities
+nu0
+' surge pitch
+    0    0

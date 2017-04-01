@@ -1,16 +1,33 @@
 PROGRAM FWTsim
 
-IMPLICIT                        NONE
+IMPLICIT NONE
 
-REAL :: dt ! Time step [s]
-REAL :: Time(16001)  ! Time array [s]
-REAL :: Mrb(2,2) ! Rigid-body inertia matrix
-REAL :: Ainf(2,2) ! Infinite added mass matrix
-REAL :: Tret ! Retardation function time step
-REAL :: K11(1,200) K15(1,200) K51(1,200) K55(1,200)  ! Retardation functions
-REAL :: Dl(2,2) ! Linear damping matrix
-REAL :: Dq(2,2) ! Quadratic damping matrix
-REAL :: Chs(2,2) ! Hydrostatic stiffness matrix
-REAL :: Cmr(2,2) ! Mooring stiffness matrix
+INTEGER                                   :: Nsys        ! Number of system states
+INTEGER                                   :: Nsteps      ! Number of simulation time steps
+INTEGER                                   :: k1          ! Count variable for DO construct
 
+REAL                                      :: dt          ! Time step [s]
+REAL                                      :: ti tf       ! Initial and final time [s]
+REAL, DIMENSION(1,:), ALLOCATABLE         :: Time        ! Time array [s]
+REAL                                      :: t           ! Current time during simulation [s]
+REAL, DIMENSION(2,1)                      :: eta0        ! Initial positions [m;rad]
+REAL, DIMENSION(2,1)                      :: nu0         ! Initial velocities [m/s;rad/s]
+REAL, DIMENSION(:,:), ALLOCATABLE         :: X           ! System state [multi-dimensional]
+REAL, DIMENSION(2,2) 					  :: Mrb         ! Rigid-body inertia matrix [kg kg.m;kg.m kg.m^2]
+REAL, DIMENSION(2,2)                      :: Ainf        ! Infinite added mass matrix [kg kg.m;kg.m kg.m^2]
+REAL                                      :: Tret        ! Retardation function time step [s]
+REAL, DIMENSION(1,:), ALLOCATABLE         :: K11 K15 K51 K55  ! Retardation functions [N/m N N N.m]
+REAL, DIMENSION(2,2)                      :: Dl          ! Linear damping matrix [N.s/m -;- N.s]
+REAL, DIMENSION(2,2)                      :: Dq          ! Quadratic damping matrix [N.s^2/m^2 -;- N.s^2]
+REAL, DIMENSION(2,2)                      :: Chs         ! Hydrostatic stiffness matrix [N/m N;N N.m]
+REAL, DIMENSION(2,2)                      :: Cmr         ! Mooring stiffness matrix [N/m N;N N.m]
+
+
+Nsteps = (ti-tf+dt)/dt    ! Number of time steps in simulation
+Nsys = 4                  ! Only eta and nu make the system
+
+simloop: DO k1=1,Nsteps
+    t = Time(k1)
+END DO simloop
+    	
 END PROGRAM FWTsim
