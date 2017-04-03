@@ -29,5 +29,34 @@ Nsys = 4                  ! Only eta and nu make the system
 simloop: DO k1=1,Nsteps
     t = Time(k1)
 END DO simloop
+
+CONTAINS
+
+SUBROUTINE RK4th(x0,t,dt,N,f,x)
+
+IMPLICIT NONE
+
+INTEGER                                   :: iter        ! Current RK iteration
+INTEGER                                   :: N           ! Order of system
+
+REAL                                      :: t           ! Time instant
+REAL                                      :: dt          ! Time step
+REAL, DIMENSION(:,1), ALLOCATABLE         :: x0          ! Current state
+REAL, DIMENSION(:,1), ALLOCATABLE         :: xp          ! Integrated state
+REAL, DIMENSION(:,1), ALLOCATABLE         :: x           ! Integrated state
+REAL, DIMENSION(:,1), ALLOCATABLE         :: k1          ! State of first iteration
+REAL, DIMENSION(:,1), ALLOCATABLE         :: k2          ! State of second iteration
+REAL, DIMENSION(:,1), ALLOCATABLE         :: k3          ! State of third iteration
+REAL, DIMENSION(:,1), ALLOCATABLE         :: k4          ! State of fourth iteration
+
+EXTERNAL                                  :: f           ! Function to be integrated             
+
+
+iter = 1
+
+
+
+
+END SUBROUTINE RK4th
     	
 END PROGRAM FWTsim
