@@ -1,6 +1,6 @@
 program FILEREADER
 
-   real, dimension(:,:), allocatable :: Mrb
+   real, dimension(:,:), allocatable :: x
    integer :: n,m
    character (len=3) :: varname
    
