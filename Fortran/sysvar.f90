@@ -2,25 +2,26 @@ MODULE sysvar
 
 IMPLICIT NONE
 
-REAL, DIMENSION(2,2)                      :: Mrb         ! Rigid-body inertia matrix
-REAL, DIMENSION(2,2)                      :: A0          ! Zero-frequency added mass matrix
-REAL, DIMENSION(2,2)                      :: Dl          ! Linear viscous damping matrix
-REAL, DIMENSION(2,2)                      :: Chs         ! Hydrostatic stiffness matrix
-REAL, DIMENSION(2,2)                      :: Cmr         ! Mooring stiffness matrix
+INTEGER                                   :: Ndof        ! Number of degrees of freedom
+INTEGER                                   :: Nsys        ! Order of system
+INTEGER                                   :: Nsteps      ! Number of simulation time steps
+INTEGER                                   :: k1          ! Count variable for DO construct
+INTEGER                                   :: i           ! Counter
+
+REAL                                      :: dt          ! Time step [s]
+REAL                                      :: ti, tf      ! Initial and final time [s]
+REAL, DIMENSION(:), ALLOCATABLE           :: Time        ! Time array [s]
+REAL, DIMENSION(:), ALLOCATABLE           :: eta0        ! Initial positions [m;rad]
+REAL, DIMENSION(:), ALLOCATABLE           :: nu0         ! Initial velocities [m/s;rad/s]
+
+REAL, DIMENSION, ALLOCATABLE              :: Mrb         ! Rigid-body inertia matrix
+REAL, DIMENSION, ALLOCATABLE              :: Add         ! Constant-frequency added mass matrix
+REAL, DIMENSION, ALLOCATABLE              :: Dl          ! Linear viscous damping matrix
+REAL, DIMENSION, ALLOCATABLE              :: Dq          ! Quadratic viscous damping matrix
+REAL, DIMENSION, ALLOCATABLE              :: Chs         ! Hydrostatic stiffness matrix
+REAL, DIMENSION, ALLOCATABLE              :: Cmr         ! Mooring stiffness matrix
 
 CONTAINS 
 
-SUBROUTINE readsysprop
-
-OPEN (UNIT=110, FILE='inp_sysprop.txt', STATUS='old', ACTION='read')
-
-! Read Mrb
-READ(110,*) Mrb(1,:)
-READ(110,*) Mrb(2,:)
-
-CLOSE (110)
-
-END SUBROUTINE readsysprop
-
-
 END MODULE sysvar
+

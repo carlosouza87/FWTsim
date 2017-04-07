@@ -1,6 +1,8 @@
 fid1 = fopen(strcat('inp_sysprop.txt'),'w');
 
 % Write Mrb to file
+line_str = num2str(size(Mrb,1)); % Number of lines to be used ==> determines number of DOF
+fprintf(fid1,[line_str '\n']); 
 for k1 = 1:size(Mrb,1)
     line_str = [num2str(Mrb(k1,1)) ' ' num2str(Mrb(k1,2))];
     fprintf(fid1,[line_str '\n']);
