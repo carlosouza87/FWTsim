@@ -11,6 +11,11 @@ REAL, DIMENSION(:,:), ALLOCATABLE          :: X           ! System state [multi-
 
 CALL read_inp
 
+test: DO k1 = 1,Nelem
+    WRITE(*,*) Blade_dim(k1,:)
+END DO test 
+
+
 Nsys = Ndof*2 ! Order of system
 Nsteps = (tf-ti+dt)/dt    ! Number of time steps in simulation
 
@@ -36,7 +41,7 @@ END DO writeloop
 
 CLOSE (100)
 
-DEALLOCATE (X, Time)
+DEALLOCATE (X, Time, Blade_dim, Foil_prop)
 
     	
 END PROGRAM FWTsim

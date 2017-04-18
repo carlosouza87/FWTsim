@@ -7,8 +7,8 @@ zg_hub = 87.6; % z coordinate for hub's center of gravity [m]
 Iyy = 6.46e10 + 4.22e8 + 4.14e8 + 1.84e8; % hull + tower + nacelle + hub [kg.m^2]
 zg = (zg_spar*7466330+zg_tower*249718+zg_nac*24000+zg_hub*54000)/m; % [m]
 
-% Mrb = [m m*zg;m*zg Iyy]; % Rigid-body inertia matrix
-Mrb = [m 0;0 Iyy]; % Decoupled system
+Mrb = [m m*zg;m*zg Iyy]; % Rigid-body inertia matrix
+% Mrb = [m 0;0 Iyy]; % Decoupled system
 syspar.strprop.Mrb = Mrb;
 
 %% Infinite-frequency added mass matrix;
@@ -40,7 +40,7 @@ Cd = 0.6; % Morison viscous coefficient
 d11q = 0.5*Cd*(D1*L1+D2*L2+D3*L3);
 d55q = 0.5*Cd*(D1*L1*h1+D2*L2*h2+D3*L3*h3);
 
-Dq = [d11q 0;0 d55q]; % Quadratic damping matrix
+Dq = 0*[d11q 0;0 d55q]; % Quadratic damping matrix
 syspar.hydro.Dq = Dq;
 
 %% Retardation functions

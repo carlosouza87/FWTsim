@@ -97,9 +97,51 @@ OPEN (UNIT=120, FILE='inp_simpar.txt', STATUS='old', ACTION='read')
 
 CLOSE (120)
 
+OPEN (UNIT=130, FILE='inp_blade.dat', STATUS='old', ACTION='read')
+
+    ! Read number of foils
+    READ(130,*) Nfoils
+	
+	! Read all foil files, and store the length of each of them	
+	foil_length: DO k1 = 1,Nfoils
+	
+	    READ(130,*) foilfilename(k1)	
+	
+	    OPEN (UNIT=140, FILE=foilfilename(k1), STATUS='old', ACTION='read')
+	        READ(140,*) Ninc(k1)
+		CLOSE (140)
+	END DO foil_length
+	
+    ! Determine the maximum	length of all foil descriptions
+	Max_inc = MAXVAL(Ninc)
+	
+	! Read number of elements describing the blades
+    READ(130,*) Nelem
+	
+	! Read matrix with blade elements properties
+	ALLOCATE (Blade_dim(Nelem,5))  
+	
+	read_blddim: DO k1 = 1,Nelem
+	    READ(130,*) Blade_dim(k1,:)	  	
+	END DO read_blddim		
+CLOSE (130)
+
+! Read 3D matrix with foil data
+ALLOCATE( Foil_prop(Max_inc,4,Nfoils))
+
+read_foildata: DO k1 = 1,Nfoils
+    OPEN (UNIT=150, FILE=foilfilename(k1), STATUS='old', ACTION='read')
+	    READ(150,*) 
+	    write_currfoil: DO k2 = 1,Ninc(k1)
+            READ(150,*) Foil_prop(k2,:,k1)
+		END DO write_currfoil
+    CLOSE (150)
+END DO read_foildata
+
 END SUBROUTINE read_inp
 
 SUBROUTINE RK4th(x0,t,dt,x)
+! Performs numerical integration with a 4-th order Runge-Kutta algorithm
 
     IMPLICIT NONE
 
@@ -140,6 +182,7 @@ SUBROUTINE RK4th(x0,t,dt,x)
 END SUBROUTINE RK4th
 
 SUBROUTINE sysdyn(x,t,dt,iter,x_p)
+! Calculates the states derivatives, based on the system dynamics
 
 IMPLICIT NONE
 

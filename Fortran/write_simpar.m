@@ -9,9 +9,6 @@ line_str = num2str(dt);
 fprintf(fid1,[line_str '\n']);
 
 % Write initial states
-line_str = num2str(size(eta0,1)); % Number of lines to be used ==> determines number of DOF
-fprintf(fid1,[line_str '\n']); 
-
 % Initial position (eta0)
 for k1 = 1:size(eta0,1)
     line_str = num2str(eta0(k1,1));
