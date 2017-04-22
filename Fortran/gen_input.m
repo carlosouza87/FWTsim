@@ -7,9 +7,13 @@ tf = 2000;   % Final time [s]
 eta0 = [-20;0];
 nu0 = [0;0];
 
-%% FWT properties
+%% Floater properties
 spar_prop
+
+%% Rotor properties
+rotor_prop 
 
 %% Genrate input files
 write_sysprop
 write_simpar
+write_rotorprop

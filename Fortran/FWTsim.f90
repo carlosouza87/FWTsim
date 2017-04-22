@@ -1,25 +1,25 @@
-PROGRAM FWTsim
+program fwtsim
 
-USE sysvar
-USE syssub
+use sysvar
+use syssub
 
-IMPLICIT NONE
+implicit none
 
-REAL, DIMENSION(:), ALLOCATABLE            :: Time        ! Time array [s]
-REAL, DIMENSION(:,:), ALLOCATABLE          :: X           ! System state [multi-dimensional]
+real(8), dimension(:), allocatable         :: Time        ! Time array [s]
+real(8), dimension(:,:), allocatable       :: X           ! System state [multi-dimensional]
 
 
-CALL read_inp
+call read_inp
 
-test: DO k1 = 1,Nelem
-    WRITE(*,*) Blade_dim(k1,:)
-END DO test 
+! test: do k1 = 1,Nelem
+    ! write(*,*) Blade_dim(k1,:)
+! end do test 
 
 
 Nsys = Ndof*2 ! Order of system
 Nsteps = (tf-ti+dt)/dt    ! Number of time steps in simulation
 
-ALLOCATE (X(Nsys,Nsteps), Time(Nsteps))
+allocate (X(Nsys,Nsteps), Time(Nsteps))
 
 Time = [(ti+(i-1)*dt, i=1,Nsteps)] ! Time vector
 
@@ -27,21 +27,19 @@ Time = [(ti+(i-1)*dt, i=1,Nsteps)] ! Time vector
 X(1:Ndof,1) = eta0(:)
 X(Ndof+1:2*Ndof,1) = nu0(:)
 
-simloop: DO k1=2,Nsteps
+simloop: do k1=2,Nsteps
     t = Time(k1)
-    CALL RK4th(X(1:Nsys,k1-1),t,dt,X(1:Nsys,k1))
-END DO simloop
+    call RK4th(X(1:Nsys,k1-1),t,dt,X(1:Nsys,k1))
+end do simloop
 
+open (unit=100,file="results.txt",action="write",status="replace")
+writeloop: do k1 = 1, Nsteps
+    write (100,*) time(k1), x(1,k1), x(2,k1), x(3,k1), x(4,k1)
+end do writeloop
 
+close (100)
 
-OPEN (UNIT=100,FILE="results.txt",ACTION="write",STATUS="replace")
-writeloop: DO k1 = 1, Nsteps
-    WRITE (100,*) Time(k1), X(1,k1), X(2,k1), X(3,k1), X(4,k1)
-END DO writeloop
-
-CLOSE (100)
-
-DEALLOCATE (X, Time, Blade_dim, Foil_prop)
+deallocate (x, time, blade_dim, foil_prop)
 
     	
-END PROGRAM FWTsim
+end program FWTsim

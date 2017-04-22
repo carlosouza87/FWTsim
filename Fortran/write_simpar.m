@@ -1,4 +1,4 @@
-fid2 = fopen(strcat('inp_simpar.txt'),'w');
+fid1 = fopen(strcat('inp_simpar.dat'),'w');
 
 % Write time parameters
 line_str = num2str(ti);
@@ -21,4 +21,4 @@ for k1 = 1:size(nu0,1)
     fprintf(fid1,[line_str '\n']);
 end
 
-fclose(fid2);
+fclose(fid1);

@@ -1,4 +1,4 @@
-fid1 = fopen(strcat('inp_sysprop.txt'),'w');
+fid1 = fopen(strcat('inp_sysprop.dat'),'w');
 
 % Write Mrb to file
 line_str = num2str(size(Mrb,1)); % Number of lines to be used ==> determines number of DOF
