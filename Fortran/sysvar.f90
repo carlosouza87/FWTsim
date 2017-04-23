@@ -7,6 +7,7 @@ character(256), dimension(20)                :: foilfilename  ! Names of foil da
 integer                                      :: Bl            ! Number of rotor blades 
 integer                                      :: foil_id       ! Foil identifier
 integer                                      :: i             ! Counter for general purposes
+integer                                      :: k_time        ! Counter for time 
 integer                                      :: k1, k2, k3    ! Count variables for DO constructs
 integer                                      :: Max_inc       ! Maximum number of incidence directions over all foils considered
 integer                                      :: Ndof          ! Number of degrees of freedom
@@ -22,7 +23,7 @@ real(8)                                      :: macheps = epsilon(PI) ! Machine 
 real(8)                                      :: Omg = 1.26 ! Rotor angular velocity - TO BE CALCULATED
 real(8)                                      :: rho_a = 1.18  ! Air density (kg/m^3)
 real(8)                                      :: rho_w = 1025.0 ! Water density (kg/m^3)
-real(8)                                      :: Uinf = 11.4 ! Wind velocity - TO BE DECLARED IN INPUT FILE
+real(8)                                      :: Uinf = 0.1 ! Wind velocity [m/s]
 
 real(8), dimension(2,2)                      :: Add           ! Constant-frequency added mass matrix
 real(8)                                      :: beta          ! Blade pitch angle [rad]
@@ -34,17 +35,20 @@ real(8), dimension(2,2)                      :: Dq            ! Quadratic viscou
 real(8)                                      :: dt            ! Time step [s]
 real(8), dimension(2)                        :: eta0          ! Initial positions [m;rad]
 real(8), dimension(:,:,:), allocatable       :: Foil_prop     ! 3D matrix for foil aerodynamic properties
-real(8), dimension(2,1)                      :: Fwind       ! Vector with wind loads
+! real(8), dimension(2,1)                      :: Fwind       ! Vector with wind loads
 real(8)                                      :: lbd_r         ! Local speed ratio []
 real(8), dimension(2,2)                      :: Mrb           ! Rigid-body inertia matrix
 real(8), dimension(2)                        :: nu0           ! Initial velocities [m/s;rad/s]
-!real(8)                                      :: Omg           ! Rotor angular velocity [rad/s]
+! real(8), dimension(:), allocatable           :: Omg_hist      ! Rotor angular velocity (variable for storage) [rad/s]
+real(8), dimension(:), allocatable           :: Qm_hist       ! Rotor thrust (variable for storage) [N]
 real(8)                                      :: r             ! Local blade radius [m]
 real(8)                                      :: Rhub          ! Hub radius   [m]
 real(8)                                      :: Rtip          ! Rotor radius [m]
 real(8)                                      :: sigma_p       ! Blade element solidity []
 real(8)                                      :: t             ! Current time during simulation [s]
+real(8)                                      :: t_clutch      ! Time for clutching system dynamics [s]
 real(8)                                      :: ti, tf        ! Initial and final time [s]
+real(8), dimension(:), allocatable           :: Th_hist       ! Rotor thrust (variable for storage) [N]
 real(8)                                      :: twist         ! Blade element twist angle [rad]
 real(8)                                      :: Zhub          ! Hub heigth [m]
 

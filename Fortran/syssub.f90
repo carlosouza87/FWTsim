@@ -85,6 +85,9 @@ open (unit=120, file='inp_simpar.dat', status='old', action='read')
 		
 	! read time step
 	read(120,*) dt	
+    
+    ! read time limit for clutching system dynamics
+	read(120,*) t_clutch	
 	
 	! read eta0
 	readeta0: do k1 = 1,Ndof
@@ -95,6 +98,9 @@ open (unit=120, file='inp_simpar.dat', status='old', action='read')
 	readnu0: do k1 = 1,Ndof
 	    read(120,*) nu0(k1)
 	end do readnu0
+    
+    ! read wind velocity
+	read(120,*) Uinf
 
 close (120)
 
@@ -165,30 +171,30 @@ subroutine RK4th(x0,t,dt,x)
     real(8)                                   :: dt          ! Time step
     real(8), dimension(:)                     :: x0          ! Current state 
     real(8), dimension(:)                     :: x           ! Integrated state
-    real(8), dimension(:), allocatable        :: k1          ! State of first iteration
-    real(8), dimension(:), allocatable        :: k2          ! State of second iteration
-    real(8), dimension(:), allocatable        :: k3          ! State of third iteration
-    real(8), dimension(:), allocatable        :: k4          ! State of fourth iteration
+    real(8), dimension(:), allocatable        :: r1          ! State of first iteration
+    real(8), dimension(:), allocatable        :: r2          ! State of second iteration
+    real(8), dimension(:), allocatable        :: r3          ! State of third iteration
+    real(8), dimension(:), allocatable        :: r4          ! State of fourth iteration
 
 	N = size(x0,1)
 	
-	allocate (k1(N), k2(n), k3(N), k4(N))
+	allocate (r1(N), r2(n), r3(N), r4(N))
 	
     iter = 1	
-    call sysdyn(x0(1:N),t,dt,iter,k1(1:N))
+    call sysdyn(x0(1:N),t,dt,iter,r1(1:N))
 	
     iter = 2
-    call sysdyn(x0(1:N)+k1(1:N)*dt/2,t+dt/2,dt,iter,k2(1:N))
+    call sysdyn(x0(1:N)+r1(1:N)*dt/2,t+dt/2,dt,iter,r2(1:N))
 	
     iter = 3 
-    call sysdyn(x0(1:N)+k2(1:N)*dt/2,t+dt/2,dt,iter,k3(1:N))
+    call sysdyn(x0(1:N)+r2(1:N)*dt/2,t+dt/2,dt,iter,r3(1:N))
 	
     iter = 4
-    call sysdyn(x0(1:N)+k3(1:N)*dt,t+dt,dt,iter,k4(1:N))
+    call sysdyn(x0(1:N)+r3(1:N)*dt,t+dt,dt,iter,r4(1:N))
 	
-	x(1:N) = x0(1:N) + (dt/6)*(k1(1:N)+2*k2(1:N)+2*k3(1:N)+k4(1:N))
+	x(1:N) = x0(1:N) + (dt/6)*(r1(1:N)+2*r2(1:N)+2*r3(1:N)+r4(1:N))
 	
-	deallocate (k1, k2, k3, k4)
+	deallocate (r1, r2, r3, r4)
 
 end subroutine RK4th
 
@@ -204,13 +210,13 @@ implicit none
     real(8)                                   :: dt          ! Time step
     real(8), dimension(2,1)                   :: eta         ! Position state
     real(8), dimension(2,1)                   :: eta_p       ! Time derivative of position state
-    ! real(8), dimension(2,1)                   :: Fwind       ! Vector with wind loads
+    real(8), dimension(2,1)                   :: Fwind       ! Vector with wind loads
     real(8), dimension(2,2)                   :: Minv        ! Inverse of Mrb+Add
 	real(8), dimension(2,1)                   :: nu          ! Velocity state    
 	real(8), dimension(2,1)                   :: nu_p        ! Time derivative of velocity state
 	real(8)                                   :: t           ! Time instant        
-    real(8)                                   :: Qm          ! Rotor moment
-    real(8)                                   :: Th          ! Rotor thrust
+    ! real(8)                                   :: Qm          ! Rotor moment
+    ! real(8)                                   :: Th          ! Rotor thrust
     real(8)                                   :: Uhub        ! Hub velocity
 	real(8), dimension(4)                     :: x           ! Current state
 	real(8), dimension(4)                     :: x_p         ! State to integrate
@@ -243,10 +249,11 @@ implicit none
     Uhub = nu(1,1) + nu(2,1)*Zhub
     
     check_iter: if (iter == 1) then
-        call BEM_ning(Uhub,Th,Qm)
-        Fwind(1,1) = Th
-        Fwind(2,1) = Th*Zhub           
+        call BEM_ning(Uhub,Th_hist(k_time),Qm_hist(k_time))
     end if check_iter
+    
+    Fwind(1,1) = -Th_hist(k_time)
+    Fwind(2,1) = -Th_hist(k_time)*Zhub  
     
 	! Inversion of Mrb + Add
 	Minv = Mrb + Add
@@ -258,8 +265,13 @@ implicit none
 	! Calculate derivative of nu, nu_p = Minv*Brhs
 	nu_p = matmul(Minv,Brhs)
 
-	x_p(1:N/2) = eta_p(:,1)
-	x_p(N/2+1:N) = nu_p(:,1)
+    test_clutch: if (t <= t_clutch) then
+        x_p(1:N/2) = eta_p(:,1)*0
+        x_p(N/2+1:N) = nu_p(:,1)*0
+    else
+        x_p(1:N/2) = eta_p(:,1)
+        x_p(N/2+1:N) = nu_p(:,1)
+    end if test_clutch
 	
 	! deallocate (eta, nu, eta_p, nu_p)
 
@@ -320,8 +332,8 @@ subroutine BEM_ning(Uhub,Th,Qm)
     Qm = 0
     
     ! Relative wind velocity [m/s]
-    ! Urel = Uinf - Uhub
-    Urel = 11.4
+    Urel = Uinf + Uhub
+    ! Urel = Uinf
     
     do_along_elem: do k_elem = 1,Nelem
         r = Blade_dim(k_elem,1)
@@ -379,9 +391,6 @@ subroutine BEM_ning(Uhub,Th,Qm)
         	
     end do do_along_elem
     
-    
-    
-
 ! Reference:
 ! Ning, S. A. - "A simple solution method for the blade element momentum equations with guaranteed convergence."
 ! Wind Energy, 2013 , 17 , 1327-1345    
