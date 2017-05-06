@@ -1,6 +1,6 @@
 clear all;close all;clc
 dos('dbg')
-% dos('FWTsim')
+dos('FWTsim')
 load results.txt
 
 figure(1)

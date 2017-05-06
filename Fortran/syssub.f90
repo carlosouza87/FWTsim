@@ -7,156 +7,224 @@ implicit none
 contains
 
 subroutine read_inp
-! reads input files (system properties and simulation parameters)
-
-open (unit=200, file='inp_sysprop.dat', status='old', action='read')
-
-    ! read number of doF
-    read(200,*) Ndof
-	
-	testNdof: if (Ndof > 2) then
-                write(*,*) 'Sorry, max. 2 doF so far. '
-        stop
-    end if testNdof
-	
-	! read Mrb
-	readMrb: do k1 = 1,Ndof
-	    read(200,*) Mrb(k1,:)
-	end do readMrb		
-	
-	! read Add
-	readAdd: do k1 = 1,Ndof
-	    read(200,*) Add(k1,:)
-	end do readAdd
-
-	! read Dl
-	readDl: do k1 = 1,Ndof
-	    read(200,*) Dl(k1,:)
-	end do readDl
-	
-   ! read Dq
-	readDq: do k1 = 1,Ndof
-	    read(200,*) Dq(k1,:)
-	end do readDq
-	
-	! read Chs
-	readChs: do k1 = 1,Ndof
-	    read(200,*) Chs(k1,:)
-	end do readChs
-	
-	! read Cmr
-	readCmr: do k1 = 1,Ndof
-	    read(200,*) Cmr(k1,:)
-	end do readCmr	
-
-    ! ! read Mrb
-    ! read(200,*) Mrb(1,:)
-    ! read(200,*) Mrb(2,:)
-	
-	! ! read Add
-	! read(200,*) Add(1,:)
-    ! read(200,*) Add(2,:)
-	
-    ! ! read Dl
-	! read(200,*) Dl(1,:)
-    ! read(200,*) Dl(2,:)
-	
-    ! ! read Dq
-	! read(200,*) Dq(1,:)
-    ! read(200,*) Dq(2,:)
-	
-	! ! read Chs
-	! read(200,*) Chs(1,:)
-    ! read(200,*) Chs(2,:)
-	
-	! ! read Cmr
-	! read(200,*) Cmr(1,:)
-    ! read(200,*) Cmr(2,:)
-
-close (200)
-
-open (unit=120, file='inp_simpar.dat', status='old', action='read')
-
-    ! read initial time
-	read(120,*) ti
-	
-	! read final time
-	read(120,*) tf
-		
-	! read time step
-	read(120,*) dt	
+! Reads input files for the simulation
     
-    ! read time limit for clutching system dynamics
-	read(120,*) t_clutch	
-	
-	! read eta0
-	readeta0: do k1 = 1,Ndof
-	    read(120,*) eta0(k1)
-	end do readeta0
-	
-	! read nu0
-	readnu0: do k1 = 1,Ndof
-	    read(120,*) nu0(k1)
-	end do readnu0
+    ! System properties 
+    open (unit=200, file='inp_sysprop.dat', status='old', action='read')
+
+        ! read number of doF
+        read(200,*) Ndof
+        
+        testNdof: if (Ndof > 2) then
+                    write(*,*) 'Sorry, max. 2 rigid-body DOF so far. '
+            stop
+        end if testNdof
+        
+        ! read Mrb
+        readMrb: do k1 = 1,Ndof
+            read(200,*) Mrb(k1,:)
+        end do readMrb		
+        
+        ! read Add
+        readAdd: do k1 = 1,Ndof
+            read(200,*) Add(k1,:)
+        end do readAdd
+
+        ! read Dl
+        readDl: do k1 = 1,Ndof
+            read(200,*) Dl(k1,:)
+        end do readDl
+        
+       ! read Dq
+        readDq: do k1 = 1,Ndof
+            read(200,*) Dq(k1,:)
+        end do readDq
+        
+        ! read Chs
+        readChs: do k1 = 1,Ndof
+            read(200,*) Chs(k1,:)
+        end do readChs
+        
+        ! read Cmr
+        readCmr: do k1 = 1,Ndof
+            read(200,*) Cmr(k1,:)
+        end do readCmr	
+
+        ! ! read Mrb
+        ! read(200,*) Mrb(1,:)
+        ! read(200,*) Mrb(2,:)
+        
+        ! ! read Add
+        ! read(200,*) Add(1,:)
+        ! read(200,*) Add(2,:)
+        
+        ! ! read Dl
+        ! read(200,*) Dl(1,:)
+        ! read(200,*) Dl(2,:)
+        
+        ! ! read Dq
+        ! read(200,*) Dq(1,:)
+        ! read(200,*) Dq(2,:)
+        
+        ! ! read Chs
+        ! read(200,*) Chs(1,:)
+        ! read(200,*) Chs(2,:)
+        
+        ! ! read Cmr
+        ! read(200,*) Cmr(1,:)
+        ! read(200,*) Cmr(2,:)
+
+    close (200)
+
+    ! Simulation parameters
+    open (unit=120, file='inp_simpar.dat', status='old', action='read')
+
+        ! read ti
+        read(120,*) ti
+        
+        ! read tf
+        read(120,*) tf
+            
+        ! read dt
+        read(120,*) dt	
+        
+        ! read t_clutch
+        read(120,*) t_clutch	
+        
+        ! read eta0
+        readeta0: do k1 = 1,Ndof
+            read(120,*) eta0(k1)
+        end do readeta0
+        
+        ! read nu0
+        readnu0: do k1 = 1,Ndof
+            read(120,*) nu0(k1)
+        end do readnu0
+        
+        ! read Uinf
+        read(120,*) Uinf
+        
+        ! Read initial Omg_rt
+        read(120,*) Omg_rt
+
+    close (120)
+
+    ! Rotor properties
+    open (unit=130, file='inp_rotorprop.dat', status='old', action='read')
+
+        ! Read number of foils
+        read(130,*) Nfoils
+        
+        ! Read all foil files, and store the length of each of them	
+        foil_length: do k1 = 1,Nfoils
+        
+            read(130,*) foilfilename(k1)	
+        
+            open (unit=140, file=foilfilename(k1), status='old', action='read')
+                read(140,*) Ninc(k1)
+            close (140)
+        end do foil_length
+        
+        ! Determine the maximum	length of all foil descriptions
+        Max_inc = maxval(Ninc)
+        
+        ! Read Bl
+        read(130,*) Bl
+        
+        ! Read Rtip
+        read(130,*) Rtip
+        
+        ! Read Rhub
+        read(130,*) Rhub
+        
+        ! Read Zhub
+        read(130,*) Zhub
+        
+        ! Read Nelem
+        read(130,*) Nelem
+        
+        ! Read matrix with blade elements properties
+        allocate (Blade_dim(Nelem,5))  
+        
+        read_blddim: do k1 = 1,Nelem
+            read(130,*) Blade_dim(k1,:)	  	
+        end do read_blddim		
+    close (130)
+
+    ! 3D matrix with foil data
+    allocate( Foil_prop(Max_inc,4,Nfoils))
+
+    read_foildata: do k1 = 1,Nfoils
+        open (unit=150, file=foilfilename(k1), status='old', action='read')
+            read(150,*) 
+            write_currfoil: do k2 = 1,Ninc(k1)
+                read(150,*) Foil_prop(k2,:,k1)
+            end do write_currfoil
+        close (150)
+    end do read_foildata
     
-    ! read wind velocity
-	read(120,*) Uinf
-
-close (120)
-
-open (unit=130, file='inp_rotor.dat', status='old', action='read')
-
-    ! read number of foils
-    read(130,*) Nfoils
-	
-	! read all foil files, and store the length of each of them	
-	foil_length: do k1 = 1,Nfoils
-	
-	    read(130,*) foilfilename(k1)	
-	
-	    open (unit=140, file=foilfilename(k1), status='old', action='read')
-	        read(140,*) Ninc(k1)
-		close (140)
-	end do foil_length
-	
-    ! Determine the maximum	length of all foil descriptions
-	Max_inc = maxval(Ninc)
+    ! Generator properties
+    open (unit=160, file='inp_generprop.dat', status='old', action='read')
     
-    ! Read number of blades
-    read(130,*) Bl
+        ! Read Igen
+        read(160,*) Igen
+        
+        ! Read Ngr
+        read(160,*) Ngr
+        
+        ! Read PC_KI
+        read(160,*) PC_KI
+        
+        ! Read PC_KK
+        real(160,*) PC_KK
+        
+        ! Read PC_KP
+        read(160,*) PC_KP
+        
+        ! Read PC_MaxPit
+        read(160,*) PC_MaxPit
+        
+        ! Read PC_MaxRat
+        read(160,*) PC_MaxRat
+        
+        ! Read PC_MinPit
+        read(160,*) PC_MinPit
+        
+        ! Read PC_RefSpd
+        read(160,*) PC_RefSpd
+        
+        ! Read VS_CtInSp
+        read(160,*) VS_CtInSp
+        
+        ! Read VS_DT
+        read(160,*) VS_DT
+        
+        ! Read VS_MaxRat
+        read(160,*) VS_MaxRat
+        
+        ! Read VS_MaxTq
+        read(160,*) VS_MaxTq
+        
+        ! Read VS_Rgn2K
+        read(160,*) VS_Rgn2K
+        
+        ! Read VS_Rgn2Sp
+        read(160,*) VS_Rgn2Sp
+        
+        ! Read VS_Rgn3MP
+        read(160,*) VS_Rgn3MP
+        
+        ! Read VS_RtGnSp
+        read(160,*) VS_RtGnSp
+        
+        ! Read VS_RtPwr
+        read(160,*) VS_RtPwr
+        
+        ! Read VS_SlPc
+        read(160,*) VS_SlPc       
+        
+    close(160)
     
-    ! Read rotor radius
-    read(130,*) Rtip
-    
-    ! Read hub radius
-    read(130,*) Rhub
-    
-    ! Read hub height
-    read(130,*) Zhub
-	
-	! read number of elements describing the blades
-    read(130,*) Nelem
-	
-	! read matrix with blade elements properties
-	allocate (Blade_dim(Nelem,5))  
-	
-	read_blddim: do k1 = 1,Nelem
-	    read(130,*) Blade_dim(k1,:)	  	
-	end do read_blddim		
-close (130)
-
-! read 3D matrix with foil data
-allocate( Foil_prop(Max_inc,4,Nfoils))
-
-read_foildata: do k1 = 1,Nfoils
-    open (unit=150, file=foilfilename(k1), status='old', action='read')
-	    read(150,*) 
-	    write_currfoil: do k2 = 1,Ninc(k1)
-            read(150,*) Foil_prop(k2,:,k1)
-		end do write_currfoil
-    close (150)
-end do read_foildata
-
 end subroutine read_inp
 
 subroutine RK4th(x0,t,dt,x)
@@ -201,19 +269,24 @@ end subroutine RK4th
 subroutine sysdyn(x,t,dt,iter,x_p)
 ! Calculates the states derivatives, based on the system dynamics
 
-implicit none
+    implicit none
 
 	integer                                   :: iter        ! Current RK iteration
-	integer                                   :: N           ! Order of system
-
+    ! integer                                   :: idx         ! Current index in state vector
+	
     real(8), dimension(2,1)                   :: Brhs        ! Right-hand-side matrix of eq. of motions
     real(8)                                   :: dt          ! Time step
     real(8), dimension(2,1)                   :: eta         ! Position state
     real(8), dimension(2,1)                   :: eta_p       ! Time derivative of position state
     real(8), dimension(2,1)                   :: Fwind       ! Vector with wind loads
+    real(8)                                   :: Idt         ! Drivetrain inertia about rotor axis [kg.m^2]
     real(8), dimension(2,2)                   :: Minv        ! Inverse of Mrb+Add
 	real(8), dimension(2,1)                   :: nu          ! Velocity state    
 	real(8), dimension(2,1)                   :: nu_p        ! Time derivative of velocity state
+    real(8)                                   :: Omg_rt      ! Rotor rotational speed [rad/s]
+    real(8)                                   :: Omg_rt_d    ! Time derivative of rotor rotational speed [rad/s^2]
+    real(8)                                   :: Qaero       ! Aerodynamic torque [N.m]
+    real(8)                                   :: Qgen        ! Generator torque [N.m]
 	real(8)                                   :: t           ! Time instant        
     ! real(8)                                   :: Qm          ! Rotor moment
     ! real(8)                                   :: Th          ! Rotor thrust
@@ -235,12 +308,15 @@ implicit none
 
 	! allocate (eta(N/2), nu(N/2), eta_p(N/2), nu_p(N/2),Brhs(N/2,N/2),Minv(N/2,N/2))
 	
-	! Initialize position and velocity vectors from input state
-	
-	N = size(x,1)
-	
-	eta(:,1) = x(1:N/2)
-	nu(:,1) = x(N/2+1:N)
+    ! ! Initialize idx
+	! idx = 0
+    
+    ! Initialize position and velocity vectors from input state
+	eta(:,1) = x(1:2)
+    nu(:,1) = x(3:4)
+    Omg_rt = x(5)
+    
+    
 	
 	! Calculate derivative of eta, eta_p = nu
 	eta_p = nu
@@ -265,13 +341,20 @@ implicit none
 	! Calculate derivative of nu, nu_p = Minv*Brhs
 	nu_p = matmul(Minv,Brhs)
 
-    test_clutch: if (t <= t_clutch) then
-        x_p(1:N/2) = eta_p(:,1)*0
-        x_p(N/2+1:N) = nu_p(:,1)*0
-    else
-        x_p(1:N/2) = eta_p(:,1)
-        x_p(N/2+1:N) = nu_p(:,1)
-    end if test_clutch
+    check_clutch: if (t <= t_clutch) then
+        eta_p(:,1) = eta_p(:,1)*0
+        nu_p(:,1) = nu_p(:,1)*0
+    end if check_clutch
+    
+    ! Evaluate drivetrain dynamics
+    Idt = Irt + (Ngr**2)*Igen ! Total drivetrain inertia
+    Omg_rt_d = ((Qaero-Ngr*Qgen)/Idt)/Ngr ! Derivative of rotor speed
+    
+    ! Output time-derivative of states
+    x_p(1:2) = eta_p
+    x_p(3:4) = nu_p
+    x_p(5) = Omg_rt_d
+    
 	
 	! deallocate (eta, nu, eta_p, nu_p)
 
@@ -342,7 +425,7 @@ subroutine BEM_ning(Uhub,Th,Qm)
         ch = Blade_dim(k_elem,4)
         foil_id = int(Blade_dim(k_elem,5))
         
-        lbd_r = Omg*r/Urel ! Local speed ratio for current element
+        lbd_r = Omg_rt*r/Urel ! Local speed ratio for current element
         sigma_p = Bl*ch/(2*PI*r) ! Solidity for current element
         
         phi = zero(eps,PI-eps,macheps,eps/1000,f_ning) ! Inflow angle
@@ -353,7 +436,7 @@ subroutine BEM_ning(Uhub,Th,Qm)
         F =  Ftip*Fhub;	! Total loss
                 
         ! Lift and drag coefficients for calculated phi
-        alpha = (phi - (twist+beta))*180/pi
+        alpha = (phi - (twist+BlPitch))*180/pi
         cl = interp1d(Foil_prop(1:Ninc(foil_id),1,foil_id),Foil_prop(1:Ninc(foil_id),2,foil_id),alpha)
 	    cd = interp1d(Foil_prop(1:Ninc(foil_id),1,foil_id),Foil_prop(1:Ninc(foil_id),3,foil_id),alpha)
     
@@ -383,7 +466,7 @@ subroutine BEM_ning(Uhub,Th,Qm)
         
         ! Calculate incremental thrust and moment
         dTh = 4*PI*r*rho_a*Urel**2*(1-a)*a*dr        
-        dQm = 4*PI*r**3*rho_a*Urel*Omg*(1-a)*a_p*dr
+        dQm = 4*PI*r**3*rho_a*Urel*Omg_rt*(1-a)*a_p*dr
         
         ! Add increments to total thrust and moment
         Th = Th + dTh
@@ -412,7 +495,7 @@ function f_ning (phi)
     real(8)                                   :: kappa, kappa_p ! Convenience parameters for axial and tangential inductions, as defined in Ning (2013)
 	real(8)                                   :: phi            ! Inflow angle    
     
-    alpha = (phi - (twist+beta))*180/pi
+    alpha = (phi - (twist+BlPitch))*180/pi
 			
 	cl = interp1d(Foil_prop(1:Ninc(foil_id),1,foil_id),Foil_prop(1:Ninc(foil_id),2,foil_id),alpha)
 	cd = interp1d(Foil_prop(1:Ninc(foil_id),1,foil_id),Foil_prop(1:Ninc(foil_id),3,foil_id),alpha)
@@ -450,6 +533,99 @@ function f_ning (phi)
 ! Ning, S. A. - "A simple solution method for the blade element momentum equations with guaranteed convergence."
 ! Wind Energy, 2013 , 17 , 1327-1345      
 end function f_ning
+
+subroutine control(BlPitch,GenSpeed,GenTrq)
+! Control system, adapted from DISCON (FAST)
+
+implicit none
+
+real(8)                                       :: GenSpeed       ! Current  HSS (generator) speed [rad/s]
+real(8), save                                 :: GenSpeedF      ! Filtered HSS (generator) speed [rad/s]
+real(8)                                       :: GK             ! Gain correction factor for scheduled PI controller []
+real(8), save                                 :: IntSpdErr      ! Integral of generator speed error [rad]
+real(8)                                       :: LastGenTrq     ! Commanded electrical generator torque the last time the controller was called [N.m]
+real(8)                                       :: SpdErr         ! Current speed error [rad/s]
+real(8)                                       :: TrqRate        ! Torque rate based on the current and last torque commands [N.m/s]
+real(8), save                                 :: VS_Slope15     ! Torque/speed slope of region 1 1/2 cut-in torque ramp [N.m.s/rad]
+real(8), save                                 :: VS_Slope25     ! Torque/speed slope of region 2 1/2 induction generator [N.m.s/rad]
+real(8), save                                 :: VS_SySp        ! Synchronous speed of region 2 1/2 induction generator [rad/s]
+real(8), save                                 :: VS_TrGnSp      ! Transitional generator speed (HSS side) between regions 2 and 2 1/2 [rad/s]
+
+VS_SySp    = VS_RtGnSp/( 1.0 +  0.01*VS_SlPc )
+VS_Slope15 = ( VS_Rgn2K*VS_Rgn2Sp*VS_Rgn2Sp )/( VS_Rgn2Sp - VS_CtInSp )
+VS_Slope25 = ( VS_RtPwr/PC_RefSpd           )/( VS_RtGnSp - VS_SySp   )
+if ( VS_Rgn2K == 0.0 )  then  ! .TRUE. if the Region 2 torque is flat, and thus, the denominator in the ELSE condition is zero
+   VS_TrGnSp = VS_SySp
+else                          ! .TRUE. if the Region 2 torque is quadratic with speed
+    VS_TrGnSp = ( VS_Slope25 - sqrt( VS_Slope25*( VS_Slope25 - 4.0*VS_Rgn2K*VS_SySp ) ) )/( 2.0*VS_Rgn2K )
+endif
+
+PitCom     = BlPitch                         ! This will ensure that the variable speed controller picks the correct control region and the pitch controller pickes the correct gain on the first call
+GK         = 1.0/( 1.0 + PitCom/PC_KK )   ! This will ensure that the pitch angle is unchanged if the initial SpdErr is zero
+IntSpdErr  = PitCom/( GK*PC_KI )          ! This will ensure that the pitch angle is unchanged if the initial SpdErr is zero
+
+LastGenTrq = GenTrq  ! Initialize the value of LastGenTrq 
+GenSpeedF = GenSpeed ! No filtering for now
+
+if ( (   GenSpeedF >= VS_RtGnSp ) .OR. (  PitCom >= VS_Rgn3MP ) )  then ! We are in region 3 - power is constant
+    GenTrq = VS_RtPwr/PC_RefSpd   !JASON:MAKE REGION 3 CONSTANT TORQUE INSTEAD OF CONSTANT POWER FOR HYWIND:    
+    ! GenTrq = VS_RtPwr/GenSpeedF
+elseif ( GenSpeedF <= VS_CtInSp )  then                                    ! We are in region 1 - torque is zero
+    GenTrq = 0.0
+elseif ( GenSpeedF <  VS_Rgn2Sp )  then                                    ! We are in region 1 1/2 - linear ramp in torque from zero to optimal
+    GenTrq = VS_Slope15*( GenSpeedF - VS_CtInSp )
+elseif ( GenSpeedF <  VS_TrGnSp )  then                                    ! We are in region 2 - optimal torque is proportional to the square of the generator speed
+    GenTrq = VS_Rgn2K*GenSpeedF*GenSpeedF
+else                                                                       ! We are in region 2 1/2 - simple induction generator transition region
+    GenTrq = VS_Slope25*( GenSpeedF - VS_SySp   )
+endif
+
+! Saturate the commanded torque using the maximum torque limit:
+GenTrq  = min( GenTrq, VS_MaxTq)   ! Saturate the command using the maximum torque limit
+
+! Saturate the commanded torque using the torque rate limit:
+TrqRate = ( GenTrq - LastGenTrq )/dt               ! Torque rate (unsaturated)
+TrqRate = min( max( TrqRate, -VS_maxRat ), VS_maxRat )   ! Saturate the torque rate using its maximum absolute value
+GenTrq  = LastGenTrq + TrqRate*dt                  ! Saturate the command using the torque rate limit
+
+! ****************************************************************************************************
+! Blade pitch controller
+! ****************************************************************************************************
+! Compute the gain scheduling correction factor based on the previously
+!   commanded pitch angle for blade 1:
+
+GK = 1.0/( 1.0 + PitCom/PC_KK )
+
+
+! Compute the current speed error and its integral w.r.t. time; saturate the
+!   integral term using the pitch angle limits:
+
+SpdErr    = GenSpeedF - PC_RefSpd                                 ! Current speed error
+IntSpdErr = IntSpdErr + SpdErr*dt                           ! Current integral of speed error w.r.t. time
+IntSpdErr = min( max( IntSpdErr, PC_minPit/( GK*PC_KI ) ), &
+                               PC_maxPit/( GK*PC_KI )      )    ! Saturate the integral term using the pitch angle limits, converted to integral speed error limits
+
+! Compute the pitch commands associated with the proportional and integral
+!   gains:
+
+PitComP   = GK*PC_KP*   SpdErr                                    ! Proportional term
+PitComI   = GK*PC_KI*IntSpdErr                                    ! Integral term (saturated)
+
+! Superimpose the individual commands to get the total pitch command;
+!   saturate the overall command using the pitch angle limits:
+
+PitComT   = PitComP + PitComI                                     ! Overall command (unsaturated)
+PitComT   = min( max( PitComT, PC_minPit ), PC_maxPit )           ! Saturate the overall command using the pitch angle limits
+
+! Saturate the overall commanded pitch using the pitch rate limit:
+PitRate = (PitComT - BlPitch)/dt
+PitRate = min(max(PitRate,-PC_maxRat),PC_maxRat)
+PitCom = BlPitch + PitRate*dt
+
+BlPitch = PitCom
+
+
+end subroutine control
 
 function zero ( a, b, machep, t, f )
 

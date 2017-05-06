@@ -15,7 +15,7 @@ write(*,*) time_values(5), time_values(6), time_values(7), time_values(8)
 
 call read_inp
 
-Nsys = Ndof*2 ! Order of system
+Nsys = Ndof*2 + 1 ! Order of system
 Nsteps = (tf-ti+dt)/dt    ! Number of time steps in simulation
 
 allocate (X(Nsys,Nsteps), Time(Nsteps), Th_hist(Nsteps), &
