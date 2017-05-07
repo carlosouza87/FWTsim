@@ -131,6 +131,9 @@ subroutine read_inp
         ! Read Bl
         read(130,*) Bl
         
+        ! Read initial value for beta
+        read(130,*) beta
+        
         ! Read Rtip
         read(130,*) Rtip
         
@@ -176,7 +179,7 @@ subroutine read_inp
         read(160,*) PC_KI
         
         ! Read PC_KK
-        real(160,*) PC_KK
+        read(160,*) PC_KK
         
         ! Read PC_KP
         read(160,*) PC_KP
@@ -274,7 +277,7 @@ subroutine sysdyn(x,t,dt,iter,x_p)
 	integer                                   :: iter        ! Current RK iteration
     ! integer                                   :: idx         ! Current index in state vector
 	
-    real(8), dimension(2,1)                   :: Brhs        ! Right-hand-side matrix of eq. of motions
+    real(8), dimension(2,1)                   :: Brhs        ! Right-hand-side vector of eq. of motions
     real(8)                                   :: dt          ! Time step
     real(8), dimension(2,1)                   :: eta         ! Position state
     real(8), dimension(2,1)                   :: eta_p       ! Time derivative of position state
@@ -283,6 +286,7 @@ subroutine sysdyn(x,t,dt,iter,x_p)
     real(8), dimension(2,2)                   :: Minv        ! Inverse of Mrb+Add
 	real(8), dimension(2,1)                   :: nu          ! Velocity state    
 	real(8), dimension(2,1)                   :: nu_p        ! Time derivative of velocity state
+    real(8)                                   :: Omg_gen     ! Generator rotational speed [rad/s]
     real(8)                                   :: Omg_rt      ! Rotor rotational speed [rad/s]
     real(8)                                   :: Omg_rt_d    ! Time derivative of rotor rotational speed [rad/s^2]
     real(8)                                   :: Qaero       ! Aerodynamic torque [N.m]
@@ -291,8 +295,8 @@ subroutine sysdyn(x,t,dt,iter,x_p)
     ! real(8)                                   :: Qm          ! Rotor moment
     ! real(8)                                   :: Th          ! Rotor thrust
     real(8)                                   :: Uhub        ! Hub velocity
-	real(8), dimension(4)                     :: x           ! Current state
-	real(8), dimension(4)                     :: x_p         ! State to integrate
+	real(8), dimension(:)                     :: x           ! Current state
+	real(8), dimension(:)                     :: x_p         ! State to integrate
 
 	
 	
@@ -316,31 +320,34 @@ subroutine sysdyn(x,t,dt,iter,x_p)
     nu(:,1) = x(3:4)
     Omg_rt = x(5)
     
-    
-	
-	! Calculate derivative of eta, eta_p = nu
-	eta_p = nu
-    
-    ! Calculate rotor loads
-    Uhub = nu(1,1) + nu(2,1)*Zhub
-    
-    check_iter: if (iter == 1) then
-        call BEM_ning(Uhub,Th_hist(k_time),Qm_hist(k_time))
+    check_iter: if (iter == 1) then           
+        ! Call controller for calculating blade pitch and generator torque        
+        Omg_gen = Omg_rt*Ngr
+        Qgen = Qm_hist(k_time)/Ngr
+        call control(beta,Omg_gen,Qgen)
+        
+        ! Calculate rotor loads
+        Uhub = nu(1,1) + nu(2,1)*Zhub    
+        Qaero = Qm_hist(k_time-1)
+        call BEM_ning(Uhub,Th_hist(k_time),Qaero)
+        Qm_hist(k_time) = Qaero;
     end if check_iter
     
     Fwind(1,1) = -Th_hist(k_time)
     Fwind(2,1) = -Th_hist(k_time)*Zhub  
     
-	! Inversion of Mrb + Add
+    ! Inversion of Mrb + Add
 	Minv = Mrb + Add
 	call matinv2(Minv)
 	
 	! Calculate right-hand-side of equations of motions
 	Brhs = -matmul(Dl,nu)-matmul(Dq,abs(nu)*nu)-matmul(Cmr,eta)-matmul(Chs,eta)+Fwind
-
-	! Calculate derivative of nu, nu_p = Minv*Brhs
+    
+    ! Calculate the derivative of eta, eta_p = nu
+    eta_p = nu
+    ! Calculate the derivative of nu, nu_p = Minv*Brhs
 	nu_p = matmul(Minv,Brhs)
-
+    
     check_clutch: if (t <= t_clutch) then
         eta_p(:,1) = eta_p(:,1)*0
         nu_p(:,1) = nu_p(:,1)*0
@@ -348,37 +355,23 @@ subroutine sysdyn(x,t,dt,iter,x_p)
     
     ! Evaluate drivetrain dynamics
     Idt = Irt + (Ngr**2)*Igen ! Total drivetrain inertia
-    Omg_rt_d = ((Qaero-Ngr*Qgen)/Idt)/Ngr ! Derivative of rotor speed
+    Omg_rt_d = (Qaero-Ngr*Qgen)/Idt ! Derivative of rotor speed
+    
+    iter2: if (iter == 1) then  
+        prtomg: if (mod(t,100.) < 1e-6) then
+            write(*,*) t, Qaero, Ngr*Qgen, Omg_rt_d*180/pi
+        end if prtomg
+    end if iter2
     
     ! Output time-derivative of states
-    x_p(1:2) = eta_p
-    x_p(3:4) = nu_p
+    x_p(1:2) = eta_p(:,1)
+    x_p(3:4) = nu_p(:,1)
     x_p(5) = Omg_rt_d
     
 	
 	! deallocate (eta, nu, eta_p, nu_p)
 
 end subroutine sysdyn
-
-subroutine matinv2(A) 
-    ! Performs a direct calculation of the inverse of a 2×2 matrix. 
-	! Source: http://fortranwiki.org/fortran/show/Matrix+inversion
-	
-    real(8)                 :: A(2,2)   !! Matrix
-    real(8)                 :: B(2,2)   !! Temp matrix
-    real(8)                 :: detinv   !! Determinant
-
-    ! Calculate the inverse determinant of the matrix
-    detinv = 1/(A(1,1)*A(2,2) - A(1,2)*A(2,1))
-
-    ! Calculate the inverse of the matrix
-    B(1,1) = +detinv * A(2,2)
-    B(2,1) = -detinv * A(2,1)
-    B(1,2) = -detinv * A(1,2)
-    B(2,2) = +detinv * A(1,1)
-	
-	A(:,:) = B(:,:)
-end subroutine
 
 subroutine BEM_ning(Uhub,Th,Qm)
 ! Blade Element Momentum theory following Ning (2013)
@@ -390,7 +383,7 @@ subroutine BEM_ning(Uhub,Th,Qm)
     
     integer                                   :: k_elem         ! Counter for elements along the blade []
     
-    real(8)                                   :: eps = 1e-6     ! Tolerance []
+    real(8), parameter                        :: tlr = 1e-6     ! Tolerance []
     
     real(8)                                   :: a, a_p         ! Axial and tangential induction factors []
     real(8)                                   :: alpha          ! Angle of attack [deg]
@@ -412,7 +405,7 @@ subroutine BEM_ning(Uhub,Th,Qm)
     
     ! Initialize Th and Qm 
     Th = 0
-    Qm = 0
+    Qm = 0    
     
     ! Relative wind velocity [m/s]
     Urel = Uinf + Uhub
@@ -428,7 +421,7 @@ subroutine BEM_ning(Uhub,Th,Qm)
         lbd_r = Omg_rt*r/Urel ! Local speed ratio for current element
         sigma_p = Bl*ch/(2*PI*r) ! Solidity for current element
         
-        phi = zero(eps,PI-eps,macheps,eps/1000,f_ning) ! Inflow angle
+        phi = zero(tlr,PI-tlr,macheps,tlr/1000,f_ning) ! Inflow angle
         
         ! Calculate tip and hub losses    
         Ftip = 2/PI * acos(exp(-(Bl/2*(Rtip-r)/(r*sin(phi))))) ! Tip loss correction (Prandt)
@@ -436,7 +429,7 @@ subroutine BEM_ning(Uhub,Th,Qm)
         F =  Ftip*Fhub;	! Total loss
                 
         ! Lift and drag coefficients for calculated phi
-        alpha = (phi - (twist+BlPitch))*180/pi
+        alpha = (phi - (twist+beta))*180/pi
         cl = interp1d(Foil_prop(1:Ninc(foil_id),1,foil_id),Foil_prop(1:Ninc(foil_id),2,foil_id),alpha)
 	    cd = interp1d(Foil_prop(1:Ninc(foil_id),1,foil_id),Foil_prop(1:Ninc(foil_id),3,foil_id),alpha)
     
@@ -495,7 +488,7 @@ function f_ning (phi)
     real(8)                                   :: kappa, kappa_p ! Convenience parameters for axial and tangential inductions, as defined in Ning (2013)
 	real(8)                                   :: phi            ! Inflow angle    
     
-    alpha = (phi - (twist+BlPitch))*180/pi
+    alpha = (phi - (twist+beta))*180/pi
 			
 	cl = interp1d(Foil_prop(1:Ninc(foil_id),1,foil_id),Foil_prop(1:Ninc(foil_id),2,foil_id),alpha)
 	cd = interp1d(Foil_prop(1:Ninc(foil_id),1,foil_id),Foil_prop(1:Ninc(foil_id),3,foil_id),alpha)
@@ -537,95 +530,123 @@ end function f_ning
 subroutine control(BlPitch,GenSpeed,GenTrq)
 ! Control system, adapted from DISCON (FAST)
 
-implicit none
+    implicit none
 
-real(8)                                       :: GenSpeed       ! Current  HSS (generator) speed [rad/s]
-real(8), save                                 :: GenSpeedF      ! Filtered HSS (generator) speed [rad/s]
-real(8)                                       :: GK             ! Gain correction factor for scheduled PI controller []
-real(8), save                                 :: IntSpdErr      ! Integral of generator speed error [rad]
-real(8)                                       :: LastGenTrq     ! Commanded electrical generator torque the last time the controller was called [N.m]
-real(8)                                       :: SpdErr         ! Current speed error [rad/s]
-real(8)                                       :: TrqRate        ! Torque rate based on the current and last torque commands [N.m/s]
-real(8), save                                 :: VS_Slope15     ! Torque/speed slope of region 1 1/2 cut-in torque ramp [N.m.s/rad]
-real(8), save                                 :: VS_Slope25     ! Torque/speed slope of region 2 1/2 induction generator [N.m.s/rad]
-real(8), save                                 :: VS_SySp        ! Synchronous speed of region 2 1/2 induction generator [rad/s]
-real(8), save                                 :: VS_TrGnSp      ! Transitional generator speed (HSS side) between regions 2 and 2 1/2 [rad/s]
+    real(8)                                       :: BlPitch        ! Blade pitch angle [rad]
+    real(8)                                       :: GenSpeed       ! Current  HSS (generator) speed [rad/s]
+    real(8), save                                 :: GenSpeedF      ! Filtered HSS (generator) speed [rad/s]
+    real(8)                                       :: GenTrq         ! Generator torque [N.m]
+    real(8)                                       :: GK             ! Gain correction factor for scheduled PI controller []
+    real(8), save                                 :: IntSpdErr      ! Integral of generator speed error [rad]
+    real(8)                                       :: LastGenTrq     ! Commanded electrical generator torque the last time the controller was called [N.m]
+    real(8)                                       :: PitCom         ! Commanded blade pitch angle [rad]
+    real(8)                                       :: PitComI        ! Integral term of command pitch [rad]
+    real(8)                                       :: PitComP        ! Proportional term of command pitch [rad]
+    real(8)                                       :: PitComT        ! Total command pitch based on the sum of the proportional and integral terms [rad]
+    real(8)                                       :: PitRate        ! Pitch rates of each blade based on the current pitch angles and current pitch command [rad/s]
+    real(8)                                       :: SpdErr         ! Current speed error [rad/s]
+    real(8)                                       :: TrqRate        ! Torque rate based on the current and last torque commands [N.m/s]
+    real(8), save                                 :: VS_Slope15     ! Torque/speed slope of region 1 1/2 cut-in torque ramp [N.m.s/rad]
+    real(8), save                                 :: VS_Slope25     ! Torque/speed slope of region 2 1/2 induction generator [N.m.s/rad]
+    real(8), save                                 :: VS_SySp        ! Synchronous speed of region 2 1/2 induction generator [rad/s]
+    real(8), save                                 :: VS_TrGnSp      ! Transitional generator speed (HSS side) between regions 2 and 2 1/2 [rad/s]
 
-VS_SySp    = VS_RtGnSp/( 1.0 +  0.01*VS_SlPc )
-VS_Slope15 = ( VS_Rgn2K*VS_Rgn2Sp*VS_Rgn2Sp )/( VS_Rgn2Sp - VS_CtInSp )
-VS_Slope25 = ( VS_RtPwr/PC_RefSpd           )/( VS_RtGnSp - VS_SySp   )
-if ( VS_Rgn2K == 0.0 )  then  ! .TRUE. if the Region 2 torque is flat, and thus, the denominator in the ELSE condition is zero
-   VS_TrGnSp = VS_SySp
-else                          ! .TRUE. if the Region 2 torque is quadratic with speed
-    VS_TrGnSp = ( VS_Slope25 - sqrt( VS_Slope25*( VS_Slope25 - 4.0*VS_Rgn2K*VS_SySp ) ) )/( 2.0*VS_Rgn2K )
-endif
+    VS_SySp    = VS_RtGnSp/( 1.0 +  0.01*VS_SlPc )
+    VS_Slope15 = ( VS_Rgn2K*VS_Rgn2Sp*VS_Rgn2Sp )/( VS_Rgn2Sp - VS_CtInSp )
+    VS_Slope25 = ( VS_RtPwr/PC_RefSpd           )/( VS_RtGnSp - VS_SySp   )
+    if ( VS_Rgn2K == 0.0 )  then  ! .TRUE. if the Region 2 torque is flat, and thus, the denominator in the ELSE condition is zero
+       VS_TrGnSp = VS_SySp
+    else                          ! .TRUE. if the Region 2 torque is quadratic with speed
+        VS_TrGnSp = ( VS_Slope25 - sqrt( VS_Slope25*( VS_Slope25 - 4.0*VS_Rgn2K*VS_SySp ) ) )/( 2.0*VS_Rgn2K )
+    endif
 
-PitCom     = BlPitch                         ! This will ensure that the variable speed controller picks the correct control region and the pitch controller pickes the correct gain on the first call
-GK         = 1.0/( 1.0 + PitCom/PC_KK )   ! This will ensure that the pitch angle is unchanged if the initial SpdErr is zero
-IntSpdErr  = PitCom/( GK*PC_KI )          ! This will ensure that the pitch angle is unchanged if the initial SpdErr is zero
+    PitCom     = BlPitch                         ! This will ensure that the variable speed controller picks the correct control region and the pitch controller pickes the correct gain on the first call
+    GK         = 1.0/( 1.0 + PitCom/PC_KK )   ! This will ensure that the pitch angle is unchanged if the initial SpdErr is zero
+    IntSpdErr  = PitCom/( GK*PC_KI )          ! This will ensure that the pitch angle is unchanged if the initial SpdErr is zero
 
-LastGenTrq = GenTrq  ! Initialize the value of LastGenTrq 
-GenSpeedF = GenSpeed ! No filtering for now
+    LastGenTrq = GenTrq  ! Initialize the value of LastGenTrq 
+    GenSpeedF = GenSpeed ! No filtering for now
 
-if ( (   GenSpeedF >= VS_RtGnSp ) .OR. (  PitCom >= VS_Rgn3MP ) )  then ! We are in region 3 - power is constant
-    GenTrq = VS_RtPwr/PC_RefSpd   !JASON:MAKE REGION 3 CONSTANT TORQUE INSTEAD OF CONSTANT POWER FOR HYWIND:    
-    ! GenTrq = VS_RtPwr/GenSpeedF
-elseif ( GenSpeedF <= VS_CtInSp )  then                                    ! We are in region 1 - torque is zero
-    GenTrq = 0.0
-elseif ( GenSpeedF <  VS_Rgn2Sp )  then                                    ! We are in region 1 1/2 - linear ramp in torque from zero to optimal
-    GenTrq = VS_Slope15*( GenSpeedF - VS_CtInSp )
-elseif ( GenSpeedF <  VS_TrGnSp )  then                                    ! We are in region 2 - optimal torque is proportional to the square of the generator speed
-    GenTrq = VS_Rgn2K*GenSpeedF*GenSpeedF
-else                                                                       ! We are in region 2 1/2 - simple induction generator transition region
-    GenTrq = VS_Slope25*( GenSpeedF - VS_SySp   )
-endif
+    if ( (   GenSpeedF >= VS_RtGnSp ) .OR. (  PitCom >= VS_Rgn3MP ) )  then ! We are in region 3 - power is constant
+        GenTrq = VS_RtPwr/PC_RefSpd   !JASON:MAKE REGION 3 CONSTANT TORQUE INSTEAD OF CONSTANT POWER FOR HYWIND:    
+        ! GenTrq = VS_RtPwr/GenSpeedF
+    elseif ( GenSpeedF <= VS_CtInSp )  then                                    ! We are in region 1 - torque is zero
+        GenTrq = 0.0
+    elseif ( GenSpeedF <  VS_Rgn2Sp )  then                                    ! We are in region 1 1/2 - linear ramp in torque from zero to optimal
+        GenTrq = VS_Slope15*( GenSpeedF - VS_CtInSp )
+    elseif ( GenSpeedF <  VS_TrGnSp )  then                                    ! We are in region 2 - optimal torque is proportional to the square of the generator speed
+        GenTrq = VS_Rgn2K*GenSpeedF*GenSpeedF
+    else                                                                       ! We are in region 2 1/2 - simple induction generator transition region
+        GenTrq = VS_Slope25*( GenSpeedF - VS_SySp   )
+    endif
+    
+    ! Saturate the commanded torque using the maximum torque limit:
+    
+    GenTrq  = min( GenTrq, VS_MaxTq)   ! Saturate the command using the maximum torque limit
+    
+    ! Saturate the commanded torque using the torque rate limit:
+    TrqRate = ( GenTrq*(1+eps) - LastGenTrq )/dt               ! Torque rate (unsaturated)
+    TrqRate = min( max( TrqRate, -VS_maxRat ), VS_maxRat )   ! Saturate the torque rate using its maximum absolute value
+    GenTrq  = LastGenTrq + TrqRate*dt                  ! Saturate the command using the torque rate limit
+    
+    ! ****************************************************************************************************
+    ! Blade pitch controller
+    ! ****************************************************************************************************
+    ! Compute the gain scheduling correction factor based on the previously
+    !   commanded pitch angle for blade 1:
 
-! Saturate the commanded torque using the maximum torque limit:
-GenTrq  = min( GenTrq, VS_MaxTq)   ! Saturate the command using the maximum torque limit
-
-! Saturate the commanded torque using the torque rate limit:
-TrqRate = ( GenTrq - LastGenTrq )/dt               ! Torque rate (unsaturated)
-TrqRate = min( max( TrqRate, -VS_maxRat ), VS_maxRat )   ! Saturate the torque rate using its maximum absolute value
-GenTrq  = LastGenTrq + TrqRate*dt                  ! Saturate the command using the torque rate limit
-
-! ****************************************************************************************************
-! Blade pitch controller
-! ****************************************************************************************************
-! Compute the gain scheduling correction factor based on the previously
-!   commanded pitch angle for blade 1:
-
-GK = 1.0/( 1.0 + PitCom/PC_KK )
+    GK = 1.0/( 1.0 + PitCom/PC_KK )
 
 
-! Compute the current speed error and its integral w.r.t. time; saturate the
-!   integral term using the pitch angle limits:
+    ! Compute the current speed error and its integral w.r.t. time; saturate the
+    !   integral term using the pitch angle limits:
 
-SpdErr    = GenSpeedF - PC_RefSpd                                 ! Current speed error
-IntSpdErr = IntSpdErr + SpdErr*dt                           ! Current integral of speed error w.r.t. time
-IntSpdErr = min( max( IntSpdErr, PC_minPit/( GK*PC_KI ) ), &
-                               PC_maxPit/( GK*PC_KI )      )    ! Saturate the integral term using the pitch angle limits, converted to integral speed error limits
+    SpdErr    = GenSpeedF - PC_RefSpd                                 ! Current speed error
+    IntSpdErr = IntSpdErr + SpdErr*dt                           ! Current integral of speed error w.r.t. time
+    IntSpdErr = min( max( IntSpdErr, PC_minPit/( GK*PC_KI ) ), &
+                                   PC_maxPit/( GK*PC_KI )      )    ! Saturate the integral term using the pitch angle limits, converted to integral speed error limits
 
-! Compute the pitch commands associated with the proportional and integral
-!   gains:
+    ! Compute the pitch commands associated with the proportional and integral
+    !   gains:
 
-PitComP   = GK*PC_KP*   SpdErr                                    ! Proportional term
-PitComI   = GK*PC_KI*IntSpdErr                                    ! Integral term (saturated)
+    PitComP   = GK*PC_KP*   SpdErr                                    ! Proportional term
+    PitComI   = GK*PC_KI*IntSpdErr                                    ! Integral term (saturated)
 
-! Superimpose the individual commands to get the total pitch command;
-!   saturate the overall command using the pitch angle limits:
+    ! Superimpose the individual commands to get the total pitch command;
+    !   saturate the overall command using the pitch angle limits:
 
-PitComT   = PitComP + PitComI                                     ! Overall command (unsaturated)
-PitComT   = min( max( PitComT, PC_minPit ), PC_maxPit )           ! Saturate the overall command using the pitch angle limits
+    PitComT   = PitComP + PitComI                                     ! Overall command (unsaturated)
+    PitComT   = min( max( PitComT, PC_minPit ), PC_maxPit )           ! Saturate the overall command using the pitch angle limits
 
-! Saturate the overall commanded pitch using the pitch rate limit:
-PitRate = (PitComT - BlPitch)/dt
-PitRate = min(max(PitRate,-PC_maxRat),PC_maxRat)
-PitCom = BlPitch + PitRate*dt
+    ! Saturate the overall commanded pitch using the pitch rate limit:
+    PitRate = (PitComT - BlPitch)/dt
+    PitRate = min(max(PitRate,-PC_maxRat),PC_maxRat)
+    PitCom = BlPitch + PitRate*dt
 
-BlPitch = PitCom
+    BlPitch = PitCom
 
 
 end subroutine control
+
+subroutine matinv2(A) 
+    ! Performs a direct calculation of the inverse of a 2×2 matrix. 
+	! Source: http://fortranwiki.org/fortran/show/Matrix+inversion
+	
+    real(8)                 :: A(2,2)   !! Matrix
+    real(8)                 :: B(2,2)   !! Temp matrix
+    real(8)                 :: detinv   !! Determinant
+
+    ! Calculate the inverse determinant of the matrix
+    detinv = 1/(A(1,1)*A(2,2) - A(1,2)*A(2,1))
+
+    ! Calculate the inverse of the matrix
+    B(1,1) = +detinv * A(2,2)
+    B(2,1) = -detinv * A(2,1)
+    B(1,2) = -detinv * A(1,2)
+    B(2,2) = +detinv * A(1,1)
+	
+	A(:,:) = B(:,:)
+end subroutine
 
 function zero ( a, b, machep, t, f )
 

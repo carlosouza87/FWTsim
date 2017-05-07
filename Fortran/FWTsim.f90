@@ -26,6 +26,7 @@ Time = [(ti+(i-1)*dt, i=1,Nsteps)] ! Time vector
 
 X(1:Ndof,1) = eta0(:)
 X(Ndof+1:2*Ndof,1) = nu0(:)
+X(2*Ndof+1,1) = Omg_rt
 
 simloop: do k_time=2,Nsteps
     t = Time(k_time)
@@ -33,9 +34,10 @@ simloop: do k_time=2,Nsteps
 end do simloop
 
 open (unit=100,file="results.txt",action="write",status="replace")
+!write(100,*) 'Time ', 'x1 ', 'x2 ', 'x1p ', 'x2p ', 'Omg_rt ', 'Th ', 'Qaer '
 writeloop: do k_time = 1, Nsteps
-    write (100,*) time(k_time), x(1,k_time), x(2,k_time), x(3,k_time), x(4,k_time), &
-        Th_hist(k_time), Qm_hist(k_time)
+    write (100,*) Time(k_time), x(1,k_time), x(2,k_time), x(3,k_time), x(4,k_time), &
+        x(5,k_time), Th_hist(k_time), Qm_hist(k_time)
 end do writeloop
 
 close (100)

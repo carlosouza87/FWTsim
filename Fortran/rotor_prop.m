@@ -9,6 +9,7 @@ foilfile(6,1) = {'DU25_A17.dat'};
 foilfile(7,1) = {'DU21_A17.dat'};
 foilfile(8,1) = {'NACA64_A17.dat'};
 Bl = 3; % Number of blades []
+beta0 = 0; % Initial blade pitch angle [rad]
 Irt = 115.926E3; % Blades + hub inertia about rotor axis [kg.m^2]
 Rtip = 63.0; % Rotor radius [m]
 Rhub = 1.5; % Hub radius [m]

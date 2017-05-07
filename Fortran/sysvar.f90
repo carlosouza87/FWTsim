@@ -26,10 +26,11 @@ real(8)                                      :: rho_w = 1025.0 ! Water density (
 real(8)                                      :: Uinf = 0.1 ! Wind velocity [m/s]
 
 real(8), dimension(2,2)                      :: Add           ! Constant-frequency added mass matrix
+real(8)                                      :: beta          ! Blade pitch angle [rad]
 real(8), dimension(:,:), allocatable         :: Blade_dim     ! Matrix with balde dimensions
-real(8)                                      :: BlPitch       ! Blade pitch angle [rad]
 real(8), dimension(2,2)                      :: Chs           ! Hydrostatic stiffness matrix
 real(8), dimension(2,2)                      :: Cmr           ! Mooring stiffness matrix
+real(8), parameter                           :: eps = epsilon(eps) ! Precision []
 real(8), dimension(2,2)                      :: Dl            ! Linear viscous damping matrix
 real(8), dimension(2,2)                      :: Dq            ! Quadratic viscous damping matrix
 real(8)                                      :: dt            ! Time step [s]
@@ -81,8 +82,6 @@ real(8)                                      :: Zhub          ! Hub heigth [m]
 ! real(8), dimension(:,:), allocatable         :: Dq            ! Quadratic viscous damping matrix
 ! real(8), dimension(:,:), allocatable         :: Chs           ! Hydrostatic stiffness matrix
 ! real(8), dimension(:,:), allocatable         :: Cmr           ! Mooring stiffness matrix
-
-real(8)                                      ::
 
 end module sysvar
 

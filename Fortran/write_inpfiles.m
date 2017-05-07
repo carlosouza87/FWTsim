@@ -88,8 +88,10 @@ for k1 = 1:size(foilfile,1)
     fprintf(fid3,[line_str '\n']);
 end
 
-% Write number of blades, rotor radius, hub radius and hub height to file
+% Write number of blades, initial blade pitch angle, rotor radius, hub radius and hub height to file
 line_str = num2str(Bl);
+fprintf(fid3,[line_str '\n']); 
+line_str = num2str(beta0);
 fprintf(fid3,[line_str '\n']); 
 line_str = num2str(Rtip);
 fprintf(fid3,[line_str '\n']); 
