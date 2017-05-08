@@ -27,6 +27,7 @@ real(8)                                      :: Uinf = 0.1 ! Wind velocity [m/s]
 
 real(8), dimension(2,2)                      :: Add           ! Constant-frequency added mass matrix
 real(8)                                      :: beta          ! Blade pitch angle [rad]
+real(8), dimension(:), allocatable           :: beta_hist     ! Blade pitch angle (variable for storage) [rad]
 real(8), dimension(:,:), allocatable         :: Blade_dim     ! Matrix with balde dimensions
 real(8), dimension(2,2)                      :: Chs           ! Hydrostatic stiffness matrix
 real(8), dimension(2,2)                      :: Cmr           ! Mooring stiffness matrix
@@ -52,7 +53,8 @@ real(8)                                      :: PC_MaxPit     ! Maximum pitch se
 real(8)                                      :: PC_MaxRat     ! Maximum pitch  rate (in absolute value) in pitch  controller [rad/s]
 real(8)                                      :: PC_MinPit     ! Minimum pitch setting in pitch controller [rad]
 real(8)                                      :: PC_RefSpd     ! Desired (reference) HSS speed for pitch controller [rad/s]
-real(8), dimension(:), allocatable           :: Qm_hist       ! Rotor torque (variable for storage) [N]
+real(8), dimension(:), allocatable           :: Qgen_hist     ! Generator torque (variable for storage) [N]
+real(8), dimension(:), allocatable           :: Qrt_hist      ! Rotor torque (variable for storage) [N]
 real(8)                                      :: r             ! Local blade radius [m]
 real(8)                                      :: Rhub          ! Hub radius   [m]
 real(8)                                      :: Rtip          ! Rotor radius [m]

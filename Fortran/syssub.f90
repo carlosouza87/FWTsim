@@ -203,8 +203,8 @@ subroutine read_inp
         read(160,*) VS_DT
         
         ! Read VS_MaxRat
-        read(160,*) VS_MaxRat
-        
+        read(160,*) VS_MaxRat    
+
         ! Read VS_MaxTq
         read(160,*) VS_MaxTq
         
@@ -318,20 +318,33 @@ subroutine sysdyn(x,t,dt,iter,x_p)
     ! Initialize position and velocity vectors from input state
 	eta(:,1) = x(1:2)
     nu(:,1) = x(3:4)
-    Omg_rt = x(5)
+    ! Omg_rt = x(5)
+    ! **************************************
+    ! GAMBIARRA !!!
+    ! **************************************
+    Omg_rt = 1.3
     
     check_iter: if (iter == 1) then           
         ! Call controller for calculating blade pitch and generator torque        
         Omg_gen = Omg_rt*Ngr
-        Qgen = Qm_hist(k_time)/Ngr
+        Qgen = Qgen_hist(k_time-1)         
         call control(beta,Omg_gen,Qgen)
+        ! **************************************
+        ! GAMBIARRA !!!
+        ! **************************************
+        beta = 0
+        Qgen_hist(k_time) = Qgen
+        beta_hist(k_time) = beta
         
         ! Calculate rotor loads
-        Uhub = nu(1,1) + nu(2,1)*Zhub    
-        Qaero = Qm_hist(k_time-1)
-        call BEM_ning(Uhub,Th_hist(k_time),Qaero)
-        Qm_hist(k_time) = Qaero;
+        Uhub = nu(1,1) + nu(2,1)*Zhub          
+        call BEM_ning(Uhub,Th_hist(k_time),Qrt_hist(k_time))      
+        Qaero = Qrt_hist(k_time)      
+    else
+        Qgen = Qgen_hist(k_time)        
+        Qaero = Qrt_hist(k_time)
     end if check_iter
+
     
     Fwind(1,1) = -Th_hist(k_time)
     Fwind(2,1) = -Th_hist(k_time)*Zhub  
@@ -351,23 +364,20 @@ subroutine sysdyn(x,t,dt,iter,x_p)
     check_clutch: if (t <= t_clutch) then
         eta_p(:,1) = eta_p(:,1)*0
         nu_p(:,1) = nu_p(:,1)*0
-    end if check_clutch
-    
+    end if check_clutch    
+ 
     ! Evaluate drivetrain dynamics
     Idt = Irt + (Ngr**2)*Igen ! Total drivetrain inertia
-    Omg_rt_d = (Qaero-Ngr*Qgen)/Idt ! Derivative of rotor speed
-    
-    iter2: if (iter == 1) then  
-        prtomg: if (mod(t,100.) < 1e-6) then
-            write(*,*) t, Qaero, Ngr*Qgen, Omg_rt_d*180/pi
-        end if prtomg
-    end if iter2
-    
+    Omg_rt_d = (Qaero-Ngr*Qgen)/Idt ! Derivative of rotor speed    
+
     ! Output time-derivative of states
     x_p(1:2) = eta_p(:,1)
     x_p(3:4) = nu_p(:,1)
-    x_p(5) = Omg_rt_d
-    
+    ! x_p(5) = Omg_rt_d   
+    ! **************************************
+    ! GAMBIARRA !!!
+    ! **************************************    
+    x_p(5) = 0    
 	
 	! deallocate (eta, nu, eta_p, nu_p)
 
@@ -440,7 +450,7 @@ subroutine BEM_ning(Uhub,Th,Qm)
         ! Convenience factors (see Ning, (2013))
         kappa  = (sigma_p*cn)/(4*F*sin(phi)**2)
         kappa_p = (sigma_p*ct)/(4*F*sin(phi)*cos(phi))
-        
+      
         ! Check if kappa exceeds limit of 2/3 (corresponding to a = 0.4)
         test_kappa: if (kappa < 2./3) then
             a = kappa/(1+kappa) ! Axial induction factor, ordinary BEM theory
@@ -466,6 +476,7 @@ subroutine BEM_ning(Uhub,Th,Qm)
         Qm = Qm + dQm       
         	
     end do do_along_elem
+
     
 ! Reference:
 ! Ning, S. A. - "A simple solution method for the blade element momentum equations with guaranteed convergence."
@@ -534,7 +545,7 @@ subroutine control(BlPitch,GenSpeed,GenTrq)
 
     real(8)                                       :: BlPitch        ! Blade pitch angle [rad]
     real(8)                                       :: GenSpeed       ! Current  HSS (generator) speed [rad/s]
-    real(8), save                                 :: GenSpeedF      ! Filtered HSS (generator) speed [rad/s]
+    real(8)                                       :: GenSpeedF      ! Filtered HSS (generator) speed [rad/s]
     real(8)                                       :: GenTrq         ! Generator torque [N.m]
     real(8)                                       :: GK             ! Gain correction factor for scheduled PI controller []
     real(8), save                                 :: IntSpdErr      ! Integral of generator speed error [rad]
@@ -560,12 +571,12 @@ subroutine control(BlPitch,GenSpeed,GenTrq)
         VS_TrGnSp = ( VS_Slope25 - sqrt( VS_Slope25*( VS_Slope25 - 4.0*VS_Rgn2K*VS_SySp ) ) )/( 2.0*VS_Rgn2K )
     endif
 
-    PitCom     = BlPitch                         ! This will ensure that the variable speed controller picks the correct control region and the pitch controller pickes the correct gain on the first call
+    PitCom     = BlPitch                      ! This will ensure that the variable speed controller picks the correct control region and the pitch controller pickes the correct gain on the first call
     GK         = 1.0/( 1.0 + PitCom/PC_KK )   ! This will ensure that the pitch angle is unchanged if the initial SpdErr is zero
     IntSpdErr  = PitCom/( GK*PC_KI )          ! This will ensure that the pitch angle is unchanged if the initial SpdErr is zero
 
     LastGenTrq = GenTrq  ! Initialize the value of LastGenTrq 
-    GenSpeedF = GenSpeed ! No filtering for now
+    GenSpeedF = GenSpeed ! No filtering for now   
 
     if ( (   GenSpeedF >= VS_RtGnSp ) .OR. (  PitCom >= VS_Rgn3MP ) )  then ! We are in region 3 - power is constant
         GenTrq = VS_RtPwr/PC_RefSpd   !JASON:MAKE REGION 3 CONSTANT TORQUE INSTEAD OF CONSTANT POWER FOR HYWIND:    
@@ -587,7 +598,8 @@ subroutine control(BlPitch,GenSpeed,GenTrq)
     ! Saturate the commanded torque using the torque rate limit:
     TrqRate = ( GenTrq*(1+eps) - LastGenTrq )/dt               ! Torque rate (unsaturated)
     TrqRate = min( max( TrqRate, -VS_maxRat ), VS_maxRat )   ! Saturate the torque rate using its maximum absolute value
-    GenTrq  = LastGenTrq + TrqRate*dt                  ! Saturate the command using the torque rate limit
+    GenTrq  = LastGenTrq + TrqRate*dt                  ! Saturate the command using the torque rate limit    
+
     
     ! ****************************************************************************************************
     ! Blade pitch controller

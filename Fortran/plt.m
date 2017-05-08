@@ -7,8 +7,9 @@ x5 = results(:,3);
 x1d = results(:,4);
 x5d = results(:,5);
 Omg_rt = results(:,6);
-Th = results(:,7);
-Qaero = results(:,8);
+beta = results(:,7);
+Th = results(:,8);
+Qaero = results(:,9);
 
 figure(1)
 plot(Time,x1)
@@ -27,32 +28,41 @@ grid on
 figure(3)
 plot(Time,x1d)
 xlabel('Time (s)')
-ylabel('x1p (m)')
-title('FWT motion - surge')
+ylabel('x1p (m/s)')
+title('FWT velocity - surge')
 grid on
 
 figure(4)
-plot(Time,x5d)
+plot(Time,x5d*180/pi)
 xlabel('Time (s)')
-ylabel('x5p (m)')
-title('FWT motion - pitch')
+ylabel('x5p (deg/s)')
+title('FWT velocity - pitch')
 grid on
 
 figure(5)
-plot(Time,Omg_rt*60/(2*pi))
+% plot(Time,Omg_rt*60/(2*pi))
+plot(Time,Omg_rt*180/pi)
 xlabel('Time (s)')
-ylabel('\omega_{rotor} (RPM)')
+% ylabel('\omega_{rotor} (RPM)')
+ylabel('\omega_{rotor} (deg/s)')
 title('Rotor speed')
 grid on
 
 figure(6)
+plot(Time,beta*180/pi)
+xlabel('Time (s)')
+ylabel('\beta (deg)')
+title('Blade pitch angle')
+grid on
+
+figure(7)
 plot(Time,Th)
 xlabel('Time (s)')
 ylabel('Thrust (N)')
 title('Rotor thrust')
 grid on
 
-figure(7)
+figure(8)
 plot(Time,Qaero)
 xlabel('Time (s)')
 ylabel('Moment (N.m)')
