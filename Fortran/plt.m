@@ -2,14 +2,26 @@ close all
 load results.txt -ascii
 
 Time = results(:,1);
+lt = length(Time);
+k1_3 = round(lt/3);
 x1 = results(:,2);
+[fx1,Sx1] = pspec(Time(k1_3:end),x1(k1_3:end));
 x5 = results(:,3);
+[fx5,Sx5] = pspec(Time(k1_3:end),x5(k1_3:end));
 x1d = results(:,4);
+[fx1d,Sx1d] = pspec(Time(k1_3:end),x1d(k1_3:end));
 x5d = results(:,5);
+[fx5d,Sx5d] = pspec(Time(k1_3:end),x5d(k1_3:end));
 Omg_rt = results(:,6);
+[fOmg_rt,SOmg_rt] = pspec(Time(k1_3:end),Omg_rt(k1_3:end));
 beta = results(:,7);
+[fbeta,Sbeta] = pspec(Time(k1_3:end),beta(k1_3:end));
 Th = results(:,8);
+[fTh,STh] = pspec(Time(k1_3:end),Th(k1_3:end));
 Qaero = results(:,9);
+[fQaero,SQaero] = pspec(Time(k1_3:end),Qaero(k1_3:end));
+Qgen = results(:,10);
+[fQgen,SQgen] = pspec(Time(k1_3:end),Qgen(k1_3:end));
 
 figure(1)
 plot(Time,x1)
@@ -68,3 +80,21 @@ xlabel('Time (s)')
 ylabel('Moment (N.m)')
 title('Rotor torque')
 grid on
+
+figure(9)
+plot(Time,Omg_rt*97)
+hold on
+plot(Time,121.6805*ones(1,length(Time)),'r--')
+xlabel('Time (s)')
+% ylabel('\omega_{rotor} (RPM)')
+ylabel('\omega_{gen} (rad/s)')
+title('Generator speed')
+grid on
+
+figure(10)
+plot(1./fOmg_rt,SOmg_rt)
+xlabel('Period (s)')
+ylabel('S_{\omega_{gen}} ')
+title('PSD - rotor speed')
+grid on
+

@@ -40,7 +40,7 @@ open (unit=100,file="results.txt",action="write",status="replace")
 !write(100,*) 'Time ', 'x1 ', 'x2 ', 'x1p ', 'x2p ', 'Omg_rt ', 'Th ', 'Qaer '
 writeloop: do k_time = 1, Nsteps
     write (100,*) Time(k_time), x(1,k_time), x(2,k_time), x(3,k_time), x(4,k_time), &
-        x(5,k_time), beta_hist(k_time), Th_hist(k_time), Qrt_hist(k_time)
+        x(5,k_time), beta_hist(k_time), Th_hist(k_time), Qrt_hist(k_time), Qgen_hist(k_time)
 end do writeloop
 
 close (100)

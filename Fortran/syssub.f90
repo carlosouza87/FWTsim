@@ -275,8 +275,7 @@ subroutine sysdyn(x,t,dt,iter,x_p)
     implicit none
 
 	integer                                   :: iter        ! Current RK iteration
-    ! integer                                   :: idx         ! Current index in state vector
-	
+    	
     real(8), dimension(2,1)                   :: Brhs        ! Right-hand-side vector of eq. of motions
     real(8)                                   :: dt          ! Time step
     real(8), dimension(2,1)                   :: eta         ! Position state
@@ -287,13 +286,10 @@ subroutine sysdyn(x,t,dt,iter,x_p)
 	real(8), dimension(2,1)                   :: nu          ! Velocity state    
 	real(8), dimension(2,1)                   :: nu_p        ! Time derivative of velocity state
     real(8)                                   :: Omg_gen     ! Generator rotational speed [rad/s]
-    real(8)                                   :: Omg_rt      ! Rotor rotational speed [rad/s]
     real(8)                                   :: Omg_rt_d    ! Time derivative of rotor rotational speed [rad/s^2]
     real(8)                                   :: Qaero       ! Aerodynamic torque [N.m]
     real(8)                                   :: Qgen        ! Generator torque [N.m]
 	real(8)                                   :: t           ! Time instant        
-    ! real(8)                                   :: Qm          ! Rotor moment
-    ! real(8)                                   :: Th          ! Rotor thrust
     real(8)                                   :: Uhub        ! Hub velocity
 	real(8), dimension(:)                     :: x           ! Current state
 	real(8), dimension(:)                     :: x_p         ! State to integrate
@@ -316,28 +312,23 @@ subroutine sysdyn(x,t,dt,iter,x_p)
 	! idx = 0
     
     ! Initialize position and velocity vectors from input state
-	eta(:,1) = x(1:2)
+	eta(:,1) = x(1:2)    
     nu(:,1) = x(3:4)
-    ! Omg_rt = x(5)
-    ! **************************************
-    ! GAMBIARRA !!!
-    ! **************************************
-    Omg_rt = 1.3
+    Omg_rt = x(5)
     
     check_iter: if (iter == 1) then           
         ! Call controller for calculating blade pitch and generator torque        
         Omg_gen = Omg_rt*Ngr
         Qgen = Qgen_hist(k_time-1)         
         call control(beta,Omg_gen,Qgen)
-        ! **************************************
-        ! GAMBIARRA !!!
-        ! **************************************
-        beta = 0
         Qgen_hist(k_time) = Qgen
         beta_hist(k_time) = beta
         
         ! Calculate rotor loads
-        Uhub = nu(1,1) + nu(2,1)*Zhub          
+        Uhub = nu(1,1) + nu(2,1)*Zhub  
+        prt_a: if (k_time == 1001) then
+            write(*,*) 'Omg_rt: ', Omg_rt
+        end if prt_a
         call BEM_ning(Uhub,Th_hist(k_time),Qrt_hist(k_time))      
         Qaero = Qrt_hist(k_time)      
     else
@@ -368,16 +359,12 @@ subroutine sysdyn(x,t,dt,iter,x_p)
  
     ! Evaluate drivetrain dynamics
     Idt = Irt + (Ngr**2)*Igen ! Total drivetrain inertia
-    Omg_rt_d = (Qaero-Ngr*Qgen)/Idt ! Derivative of rotor speed    
+    Omg_rt_d = (Qaero-Ngr*Qgen)/Idt ! Derivative of rotor speed       
 
     ! Output time-derivative of states
     x_p(1:2) = eta_p(:,1)
     x_p(3:4) = nu_p(:,1)
-    ! x_p(5) = Omg_rt_d   
-    ! **************************************
-    ! GAMBIARRA !!!
-    ! **************************************    
-    x_p(5) = 0    
+    x_p(5) = Omg_rt_d   
 	
 	! deallocate (eta, nu, eta_p, nu_p)
 
@@ -385,9 +372,6 @@ end subroutine sysdyn
 
 subroutine BEM_ning(Uhub,Th,Qm)
 ! Blade Element Momentum theory following Ning (2013)
-
-    use sysvar
-    use lib_array
 
     implicit none
     
@@ -418,12 +402,12 @@ subroutine BEM_ning(Uhub,Th,Qm)
     Qm = 0    
     
     ! Relative wind velocity [m/s]
-    Urel = Uinf + Uhub
-    ! Urel = Uinf
+    Urel = Uinf - Uhub
+    ! Urel = -Uinf - Uhub
     
     do_along_elem: do k_elem = 1,Nelem
         r = Blade_dim(k_elem,1)
-        twist = Blade_dim(k_elem,2)*PI/180
+        twist = Blade_dim(k_elem,2)*pi/180
         dr = Blade_dim(k_elem,3)
         ch = Blade_dim(k_elem,4)
         foil_id = int(Blade_dim(k_elem,5))
@@ -431,7 +415,7 @@ subroutine BEM_ning(Uhub,Th,Qm)
         lbd_r = Omg_rt*r/Urel ! Local speed ratio for current element
         sigma_p = Bl*ch/(2*PI*r) ! Solidity for current element
         
-        phi = zero(tlr,PI-tlr,macheps,tlr/1000,f_ning) ! Inflow angle
+        phi = zero(tlr,pi-tlr,macheps,tlr/1000,f_ning) ! Inflow angle
         
         ! Calculate tip and hub losses    
         Ftip = 2/PI * acos(exp(-(Bl/2*(Rtip-r)/(r*sin(phi))))) ! Tip loss correction (Prandt)
@@ -465,12 +449,13 @@ subroutine BEM_ning(Uhub,Th,Qm)
         end if test_kappa	
         
         a_p = kappa_p/(1-kappa_p) ! Tangential induction factor
-        ! a_p = (-1+4*F*sin(phi)*cos(phi)/(sigma_p*ct))**(-1) ! Tangential induction factor
+        ! a_p = (-1+4*F*sin(phi)*cos(phi)/(sigma_p*ct))**(-1) ! Tangential induction factor       
+
         
         ! Calculate incremental thrust and moment
-        dTh = 4*PI*r*rho_a*Urel**2*(1-a)*a*dr        
-        dQm = 4*PI*r**3*rho_a*Urel*Omg_rt*(1-a)*a_p*dr
-        
+        dTh = 4*pi*r*rho_a*Urel**2*(1-a)*a*dr        
+        dQm = 4*pi*r**3*rho_a*Urel*Omg_rt*(1-a)*a_p*dr
+                
         ! Add increments to total thrust and moment
         Th = Th + dTh
         Qm = Qm + dQm       
@@ -579,8 +564,8 @@ subroutine control(BlPitch,GenSpeed,GenTrq)
     GenSpeedF = GenSpeed ! No filtering for now   
 
     if ( (   GenSpeedF >= VS_RtGnSp ) .OR. (  PitCom >= VS_Rgn3MP ) )  then ! We are in region 3 - power is constant
-        GenTrq = VS_RtPwr/PC_RefSpd   !JASON:MAKE REGION 3 CONSTANT TORQUE INSTEAD OF CONSTANT POWER FOR HYWIND:    
-        ! GenTrq = VS_RtPwr/GenSpeedF
+        ! GenTrq = VS_RtPwr/PC_RefSpd   !JASON:MAKE REGION 3 CONSTANT TORQUE INSTEAD OF CONSTANT POWER FOR HYWIND:    
+        GenTrq = VS_RtPwr/GenSpeedF
     elseif ( GenSpeedF <= VS_CtInSp )  then                                    ! We are in region 1 - torque is zero
         GenTrq = 0.0
     elseif ( GenSpeedF <  VS_Rgn2Sp )  then                                    ! We are in region 1 1/2 - linear ramp in torque from zero to optimal

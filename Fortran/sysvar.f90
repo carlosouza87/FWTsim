@@ -44,7 +44,7 @@ real(8)                                      :: lbd_r         ! Local speed rati
 real(8), dimension(2,2)                      :: Mrb           ! Rigid-body inertia matrix
 real(8)                                      :: Ngr           ! Gear ratio []
 real(8), dimension(2)                        :: nu0           ! Initial velocities [m/s;rad/s]
-real(8)                                      :: Omg_rt        ! Rotor angular velocity [rad/s] - TO BE CALCULATED
+real(8)                                      :: Omg_rt        ! Rotor angular velocity [rad/s]
 ! real(8), dimension(:), allocatable           :: Omg_hist      ! Rotor angular velocity (variable for storage) [rad/s]
 real(8)                                      :: PC_KI         ! Integral gain for pitch controller [s]
 real(8)                                      :: PC_KK         ! Pitch angle were the the derivative of the aerodynamic power w.r.t. pitch has increased by a factor of two relative to the derivative at rated pitch (zero) [rad]
