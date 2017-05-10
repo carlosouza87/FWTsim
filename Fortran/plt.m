@@ -24,40 +24,81 @@ Qgen = results(:,10);
 [fQgen,SQgen] = pspec(Time(k1_3:end),Qgen(k1_3:end));
 
 figure(1)
+% subplot(1,2,1)
+subplot(2,1,1)
 plot(Time,x1)
 xlabel('Time (s)')
 ylabel('x1 (m)')
 title('FWT motion - surge')
 grid on
+% subplot(1,2,2)
+subplot(2,1,2)
+plot(1./fx1,Sx1)
+xlabel('Period (s)')
+ylabel('S_{x1} (m^2.s)')
+title('PSD - surge')
+xlim([0 200])
+grid on
 
 figure(2)
+subplot(2,1,1)
 plot(Time,x5*180/pi)
 xlabel('Time (s)')
 ylabel('x5 (deg)')
 title('FWT motion - pitch')
 grid on
+subplot(2,1,2)
+plot(1./fx5,Sx5)
+xlabel('Period (s)')
+ylabel('S_{x5} (rad^2.s^-1)')
+title('PSD - pitch')
+xlim([0 200])
+grid on
 
 figure(3)
+subplot(2,1,1)
 plot(Time,x1d)
 xlabel('Time (s)')
 ylabel('x1p (m/s)')
 title('FWT velocity - surge')
 grid on
+subplot(2,1,2)
+plot(1./fx1d,Sx1d)
+xlabel('Period (s)')
+ylabel('S_{x1} (m^2.s-1)')
+title('PSD - surge velocity')
+xlim([0 200])
+grid on
 
 figure(4)
+subplot(2,1,1)
 plot(Time,x5d*180/pi)
 xlabel('Time (s)')
 ylabel('x5p (deg/s)')
 title('FWT velocity - pitch')
 grid on
+subplot(2,1,2)
+plot(1./fx5d,Sx5d)
+xlabel('Period (s)')
+ylabel('S_{x1} (rad^2.s^-1)')
+title('PSD - pitch velocity')
+xlim([0 200])
+grid on
 
 figure(5)
-% plot(Time,Omg_rt*60/(2*pi))
+subplot(2,1,1)
 plot(Time,Omg_rt*180/pi)
 xlabel('Time (s)')
 % ylabel('\omega_{rotor} (RPM)')
 ylabel('\omega_{rotor} (deg/s)')
 title('Rotor speed')
+grid on
+subplot(2,1,2)
+plot(1./fOmg_rt,SOmg_rt)
+xlabel('Period (s)')
+ylabel('S_{Omg_rt} (rad^2.s^-1)')
+title('PSD - Rotor Speed')
+xlim([0 200])
 grid on
 
 figure(6)

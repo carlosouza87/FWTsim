@@ -326,9 +326,6 @@ subroutine sysdyn(x,t,dt,iter,x_p)
         
         ! Calculate rotor loads
         Uhub = nu(1,1) + nu(2,1)*Zhub  
-        prt_a: if (k_time == 1001) then
-            write(*,*) 'Omg_rt: ', Omg_rt
-        end if prt_a
         call BEM_ning(Uhub,Th_hist(k_time),Qrt_hist(k_time))      
         Qaero = Qrt_hist(k_time)      
     else
@@ -337,8 +334,8 @@ subroutine sysdyn(x,t,dt,iter,x_p)
     end if check_iter
 
     
-    Fwind(1,1) = -Th_hist(k_time)
-    Fwind(2,1) = -Th_hist(k_time)*Zhub  
+    Fwind(1,1) = Th_hist(k_time)
+    Fwind(2,1) = Th_hist(k_time)*Zhub  
     
     ! Inversion of Mrb + Add
 	Minv = Mrb + Add
@@ -403,7 +400,6 @@ subroutine BEM_ning(Uhub,Th,Qm)
     
     ! Relative wind velocity [m/s]
     Urel = Uinf - Uhub
-    ! Urel = -Uinf - Uhub
     
     do_along_elem: do k_elem = 1,Nelem
         r = Blade_dim(k_elem,1)
