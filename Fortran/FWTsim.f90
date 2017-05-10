@@ -7,11 +7,15 @@ implicit none
 
 real(8), dimension(:), allocatable         :: Time        ! Time array [s]
 real(8), dimension(:,:), allocatable       :: X           ! System state [multi-dimensional]
+real(8)                                    :: simtime     ! Simulation time
 
 integer,dimension(8) :: time_values
 
+write(*,*) 'Running...'
 call date_and_time(VALUES=time_values)
-write(*,*) time_values(5), time_values(6), time_values(7), time_values(8)
+simtime = real(time_values(5))*3600 + real(time_values(6))*60 + real(time_values(7)) &
+    + real(time_values(8))/1000
+! write(*,*) time_values(5), time_values(6), time_values(7), time_values(8)
 
 call read_inp
 
@@ -48,7 +52,11 @@ close (100)
 deallocate (x, time, blade_dim, foil_prop, Th_hist, Qrt_hist, Qgen_hist, beta_hist)
 
 call date_and_time(VALUES=time_values)
-write(*,*) time_values(5), time_values(6), time_values(7), time_values(8)
+! write(*,*) time_values(5), time_values(6), time_values(7), time_values(8)
+simtime = real(time_values(5))*3600 + real(time_values(6))*60 + real(time_values(7)) &
+    + real(time_values(8))/1000 - simtime
+    
+    write(*,*) 'Execution time: ', simtime, 's'
 
     	
 end program FWTsim

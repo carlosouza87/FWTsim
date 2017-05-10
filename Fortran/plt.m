@@ -96,46 +96,72 @@ grid on
 subplot(2,1,2)
 plot(1./fOmg_rt,SOmg_rt)
 xlabel('Period (s)')
-ylabel('S_{Omg_rt} (rad^2.s^-1)')
-title('PSD - Rotor Speed')
+ylabel('S_{Omg_{rt}} (rad^2.s^-1)')
+title('PSD - rotor Speed')
 xlim([0 200])
 grid on
 
 figure(6)
+subplot(2,1,1)
 plot(Time,beta*180/pi)
 xlabel('Time (s)')
 ylabel('\beta (deg)')
 title('Blade pitch angle')
 grid on
+subplot(2,1,2)
+plot(1./fbeta,Sbeta)
+xlabel('Period (s)')
+ylabel('S_{beta} (rad^2.s^-1)')
+title('PSD - blade pitch angle')
+xlim([0 200])
+grid on
 
 figure(7)
+subplot(2,1,1)
 plot(Time,Th)
 xlabel('Time (s)')
 ylabel('Thrust (N)')
 title('Rotor thrust')
 grid on
+subplot(2,1,2)
+plot(1./fTh,STh)
+xlabel('Period (s)')
+ylabel('S_{Th} (rad^2.s^-1)')
+title('PSD - Rotor thrust')
+xlim([0 200])
+grid on
 
 figure(8)
+subplot(2,1,1)
 plot(Time,Qaero)
 xlabel('Time (s)')
-ylabel('Moment (N.m)')
+ylabel('Torque (N.m)')
 title('Rotor torque')
 grid on
-
-figure(9)
-plot(Time,Omg_rt*97)
-hold on
-plot(Time,121.6805*ones(1,length(Time)),'r--')
-xlabel('Time (s)')
-% ylabel('\omega_{rotor} (RPM)')
-ylabel('\omega_{gen} (rad/s)')
-title('Generator speed')
-grid on
-
-figure(10)
-plot(1./fOmg_rt,SOmg_rt)
+subplot(2,1,2)
+plot(1./fQaero,SQaero)
 xlabel('Period (s)')
-ylabel('S_{\omega_{gen}} ')
-title('PSD - rotor speed')
+ylabel('S_{Qaero} (rad^2.s^-1)')
+title('PSD - rotor torque')
+xlim([0 200])
 grid on
+
+% figure(9)
+% subplot(2,1,1)
+% plot(Time,Omg_rt*97)
+% hold on
+% plot(Time,121.6805*ones(1,length(Time)),'r--')
+% xlabel('Time (s)')
+% % ylabel('\omega_{rotor} (RPM)')
+% ylabel('\omega_{gen} (rad/s)')
+% title('Generator speed')
+% grid on
+% subplot(2,1,2)
+% plot(1./fQaero,SQaero)
+% xlabel('Period (s)')
+% ylabel('S_{Qaero} (rad^2.s^-1)')
+% title('PSD - rotor torque')
+% xlim([0 200])
+% grid on
+
 

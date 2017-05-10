@@ -524,14 +524,18 @@ subroutine control(BlPitch,GenSpeed,GenTrq)
 
     implicit none
 
+    ! real(8)                                       :: Alpha_filter   ! Current coefficient in the recursive, single-pole, low-pass filter, (-).
     real(8)                                       :: BlPitch        ! Blade pitch angle [rad]
+    ! real(8)                                       :: CornerFreq     ! Corner frequency
     real(8)                                       :: GenSpeed       ! Current  HSS (generator) speed [rad/s]
     real(8)                                       :: GenSpeedF      ! Filtered HSS (generator) speed [rad/s]
+    ! real(8), save                                 :: GenSpeedF      ! Filtered HSS (generator) speed [rad/s]
     real(8)                                       :: GenTrq         ! Generator torque [N.m]
     real(8)                                       :: GK             ! Gain correction factor for scheduled PI controller []
     real(8), save                                 :: IntSpdErr      ! Integral of generator speed error [rad]
     real(8)                                       :: LastGenTrq     ! Commanded electrical generator torque the last time the controller was called [N.m]
     real(8)                                       :: PitCom         ! Commanded blade pitch angle [rad]
+    ! real(8), save                                 :: PitCom         ! Commanded blade pitch angle [rad]
     real(8)                                       :: PitComI        ! Integral term of command pitch [rad]
     real(8)                                       :: PitComP        ! Proportional term of command pitch [rad]
     real(8)                                       :: PitComT        ! Total command pitch based on the sum of the proportional and integral terms [rad]
@@ -552,16 +556,20 @@ subroutine control(BlPitch,GenSpeed,GenTrq)
         VS_TrGnSp = ( VS_Slope25 - sqrt( VS_Slope25*( VS_Slope25 - 4.0*VS_Rgn2K*VS_SySp ) ) )/( 2.0*VS_Rgn2K )
     endif
 
-    PitCom     = BlPitch                      ! This will ensure that the variable speed controller picks the correct control region and the pitch controller pickes the correct gain on the first call
-    GK         = 1.0/( 1.0 + PitCom/PC_KK )   ! This will ensure that the pitch angle is unchanged if the initial SpdErr is zero
-    IntSpdErr  = PitCom/( GK*PC_KI )          ! This will ensure that the pitch angle is unchanged if the initial SpdErr is zero
-
     LastGenTrq = GenTrq  ! Initialize the value of LastGenTrq 
+    
+    ! ! Low-pass filtering of generator speed
+    ! test_1stiter: if (k_time == 1) then
+        ! GenSpeedF = GenSpeed
+    ! end if test_1stiter
+    ! CornerFreq = pi/2
+    ! Alpha_filter = exp(-dt*CornerFreq)
+    ! GenSpeedF = ( 1.0 - Alpha_filter)*GenSpeed + Alpha_filter*GenSpeedF
     GenSpeedF = GenSpeed ! No filtering for now   
 
     if ( (   GenSpeedF >= VS_RtGnSp ) .OR. (  PitCom >= VS_Rgn3MP ) )  then ! We are in region 3 - power is constant
-        ! GenTrq = VS_RtPwr/PC_RefSpd   !JASON:MAKE REGION 3 CONSTANT TORQUE INSTEAD OF CONSTANT POWER FOR HYWIND:    
-        GenTrq = VS_RtPwr/GenSpeedF
+        GenTrq = VS_RtPwr/PC_RefSpd   !JASON:MAKE REGION 3 CONSTANT TORQUE INSTEAD OF CONSTANT POWER FOR HYWIND:    
+        ! GenTrq = VS_RtPwr/GenSpeedF
     elseif ( GenSpeedF <= VS_CtInSp )  then                                    ! We are in region 1 - torque is zero
         GenTrq = 0.0
     elseif ( GenSpeedF <  VS_Rgn2Sp )  then                                    ! We are in region 1 1/2 - linear ramp in torque from zero to optimal
@@ -587,7 +595,8 @@ subroutine control(BlPitch,GenSpeed,GenTrq)
     ! ****************************************************************************************************
     ! Compute the gain scheduling correction factor based on the previously
     !   commanded pitch angle for blade 1:
-
+    
+    PitCom     = BlPitch                      
     GK = 1.0/( 1.0 + PitCom/PC_KK )
 
 
@@ -595,9 +604,9 @@ subroutine control(BlPitch,GenSpeed,GenTrq)
     !   integral term using the pitch angle limits:
 
     SpdErr    = GenSpeedF - PC_RefSpd                                 ! Current speed error
-    IntSpdErr = IntSpdErr + SpdErr*dt                           ! Current integral of speed error w.r.t. time
+    IntSpdErr = IntSpdErr + SpdErr*dt                                 ! Current integral of speed error w.r.t. time
     IntSpdErr = min( max( IntSpdErr, PC_minPit/( GK*PC_KI ) ), &
-                                   PC_maxPit/( GK*PC_KI )      )    ! Saturate the integral term using the pitch angle limits, converted to integral speed error limits
+                                   PC_maxPit/( GK*PC_KI )      )      ! Saturate the integral term using the pitch angle limits, converted to integral speed error limits
 
     ! Compute the pitch commands associated with the proportional and integral
     !   gains:
