@@ -23,7 +23,7 @@ real(8)                                      :: PI = 4.D0*datan(1.D0) ! Pi []
 real(8)                                      :: macheps = epsilon(PI) ! Machine tolerance
 real(8)                                      :: rho_a = 1.225  ! Air density (kg/m^3)
 real(8)                                      :: rho_w = 1025.0 ! Water density (kg/m^3)
-real(8)                                      :: Uinf = 0.1 ! Wind velocity [m/s]
+real(8)                                      :: Uinf           ! Wind velocity [m/s]
 
 real(8), dimension(2,2)                      :: Add           ! Constant-frequency added mass matrix
 real(8)                                      :: beta          ! Blade pitch angle [rad]

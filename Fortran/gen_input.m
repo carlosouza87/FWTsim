@@ -1,8 +1,8 @@
 %% Time parameters
 dt = 0.1;    % Time step [s]
 ti = 0;      % Initial time [s]
-tf = 2500;   % Final time [s]
-t_clutch = 0; % Time limit for clutching system dynamics [s]
+tf = 1000;   % Final time [s]
+t_clutch = 1000; % Time limit for clutching spar motions [s]
 
 %% Initial states - automatically defines number of rigid-body DOFs
 eta0 = [-20;0]; % Initial positions
@@ -10,7 +10,7 @@ nu0 = [0;0]; % Initial velocities
 Omg_rt0 = 0.01; % Initial rotor speed [rad/s] - must be greater than 0!
 
 %% Wind velocity
-Uwind = 11.4;
+Uwind = 0.01;
 
 %% Floater properties
 spar_prop

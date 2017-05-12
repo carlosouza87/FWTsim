@@ -12,10 +12,9 @@ Mrb = [m m*zg;m*zg Iyy]; % Rigid-body inertia matrix
 syspar.strprop.Mrb = Mrb;
 
 %% Infinite-frequency added mass matrix;
-% Ainf = [7.76e6 -4.83e8;-4.83e8 3.79e8];
-% Ainf = [7.76e6 0;0 3.79e8]; % Decoupled system
-Ainf = [7.99e6 0;0 3.81e10]; % Decoupled system, and with A0 instead
-syspar.hydro.Ainf = Ainf;
+Add = [7.99e6,-4.87e8;-4.87e8,3.81e10]; % A0 values 
+% Add = [7.99e6 0;0 3.81e10]; % Decoupled system
+syspar.hydro.Add = Add;
 
 %% Linear damping matrix
 Dl = [100000 0;0 0];
@@ -40,7 +39,7 @@ Cd = 0.6; % Morison viscous coefficient
 d11q = 0.5*Cd*(D1*L1+D2*L2+D3*L3);
 d55q = 0.5*Cd*(D1*L1*h1+D2*L2*h2+D3*L3*h3);
 
-Dq = 0*[d11q 0;0 d55q]; % Quadratic damping matrix
+Dq = [d11q 0;0 d55q]; % Quadratic damping matrix
 syspar.hydro.Dq = Dq;
 
 %% Retardation functions
@@ -65,8 +64,8 @@ Chs = [0 0;0 1.59e9];
 syspar.hydro.Chs = Chs;
 
 %% Mooring stiffness matrix
-% Cmr = [41180 -2816000;-2816000 311100000];
-Cmr = [41180 0;0 311100000];  % Decoupled system
+Cmr = [41180 -2821000;-2816000 311100000];
+% Cmr = [41180 0;0 311100000];  % Decoupled system
 
 syspar.external.Cmr = Cmr;
 

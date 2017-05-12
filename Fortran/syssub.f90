@@ -49,7 +49,7 @@ subroutine read_inp
         readCmr: do k1 = 1,Ndof
             read(200,*) Cmr(k1,:)
         end do readCmr	
-
+       
         ! ! read Mrb
         ! read(200,*) Mrb(1,:)
         ! read(200,*) Mrb(2,:)
@@ -342,12 +342,13 @@ subroutine sysdyn(x,t,dt,iter,x_p)
 	call matinv2(Minv)
 	
 	! Calculate right-hand-side of equations of motions
-	Brhs = -matmul(Dl,nu)-matmul(Dq,abs(nu)*nu)-matmul(Cmr,eta)-matmul(Chs,eta)+Fwind
-    
+	Brhs = -matmul(Dl,nu)-matmul(Dq,abs(nu)*nu)-matmul(Cmr,eta)-matmul(Chs,eta)+Fwind    
+   
     ! Calculate the derivative of eta, eta_p = nu
     eta_p = nu
+    
     ! Calculate the derivative of nu, nu_p = Minv*Brhs
-	nu_p = matmul(Minv,Brhs)
+	nu_p = matmul(Minv,Brhs)    
     
     check_clutch: if (t <= t_clutch) then
         eta_p(:,1) = eta_p(:,1)*0
@@ -568,8 +569,8 @@ subroutine control(BlPitch,GenSpeed,GenTrq)
     GenSpeedF = GenSpeed ! No filtering for now   
 
     if ( (   GenSpeedF >= VS_RtGnSp ) .OR. (  PitCom >= VS_Rgn3MP ) )  then ! We are in region 3 - power is constant
-        GenTrq = VS_RtPwr/PC_RefSpd   !JASON:MAKE REGION 3 CONSTANT TORQUE INSTEAD OF CONSTANT POWER FOR HYWIND:    
-        ! GenTrq = VS_RtPwr/GenSpeedF
+        ! GenTrq = VS_RtPwr/PC_RefSpd   !JASON:MAKE REGION 3 CONSTANT TORQUE INSTEAD OF CONSTANT POWER FOR HYWIND:    
+        GenTrq = VS_RtPwr/GenSpeedF
     elseif ( GenSpeedF <= VS_CtInSp )  then                                    ! We are in region 1 - torque is zero
         GenTrq = 0.0
     elseif ( GenSpeedF <  VS_Rgn2Sp )  then                                    ! We are in region 1 1/2 - linear ramp in torque from zero to optimal

@@ -10,8 +10,8 @@ for k1 = 1:size(Mrb,1)
 end
 
 % Write Ainf to file
-for k1 = 1:size(Ainf,1)
-    line_str = [num2str(Ainf(k1,1)) ' ' num2str(Ainf(k1,2))];
+for k1 = 1:size(Add,1)
+    line_str = [num2str(Add(k1,1)) ' ' num2str(Add(k1,2))];
     fprintf(fid1,[line_str '\n']);
 end
 
