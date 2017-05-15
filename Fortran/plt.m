@@ -3,25 +3,26 @@ load results.txt -ascii
 
 Time = results(:,1);
 lt = length(Time);
-k1_3 = round(lt/3);
+% k_13 = round(lt/3);
+kclutch = 100/0.1+1;
 x1 = results(:,2);
-[fx1,Sx1] = pspec(Time(k1_3:end),x1(k1_3:end));
+[fx1,Sx1] = pspec(Time(kclutch:end),x1(kclutch:end)-mean(x1(kclutch:end)));
 x5 = results(:,3);
-[fx5,Sx5] = pspec(Time(k1_3:end),x5(k1_3:end));
+[fx5,Sx5] = pspec(Time(kclutch:end),x5(kclutch:end)-mean(x5(kclutch:end)));
 x1d = results(:,4);
-[fx1d,Sx1d] = pspec(Time(k1_3:end),x1d(k1_3:end));
+[fx1d,Sx1d] = pspec(Time(kclutch:end),x1d(kclutch:end)-mean(x1d(kclutch:end)));
 x5d = results(:,5);
-[fx5d,Sx5d] = pspec(Time(k1_3:end),x5d(k1_3:end));
+[fx5d,Sx5d] = pspec(Time(kclutch:end),x5d(kclutch:end)-mean(x5d(kclutch:end)));
 Omg_rt = results(:,6);
-[fOmg_rt,SOmg_rt] = pspec(Time(k1_3:end),Omg_rt(k1_3:end));
+[fOmg_rt,SOmg_rt] = pspec(Time(kclutch:end),Omg_rt(kclutch:end)-mean(Omg_rt(kclutch:end)));
 beta = results(:,7);
-[fbeta,Sbeta] = pspec(Time(k1_3:end),beta(k1_3:end));
+[fbeta,Sbeta] = pspec(Time(kclutch:end),beta(kclutch:end)-mean(beta(kclutch:end)));
 Th = results(:,8);
-[fTh,STh] = pspec(Time(k1_3:end),Th(k1_3:end));
+[fTh,STh] = pspec(Time(kclutch:end),Th(kclutch:end)-mean(Th(kclutch:end)));
 Qaero = results(:,9);
-[fQaero,SQaero] = pspec(Time(k1_3:end),Qaero(k1_3:end));
+[fQaero,SQaero] = pspec(Time(kclutch:end),Qaero(kclutch:end)-mean(Qaero(kclutch:end)));
 Qgen = results(:,10);
-[fQgen,SQgen] = pspec(Time(k1_3:end),Qgen(k1_3:end));
+[fQgen,SQgen] = pspec(Time(kclutch:end),Qgen(kclutch:end)-mean(Qgen(kclutch:end)));
 
 figure(1)
 % subplot(1,2,1)

@@ -91,6 +91,9 @@ subroutine read_inp
         ! read t_clutch
         read(120,*) t_clutch	
         
+        ! read t_ramp
+        read(120,*) t_ramp	
+        
         ! read eta0
         readeta0: do k1 = 1,Ndof
             read(120,*) eta0(k1)
@@ -280,6 +283,7 @@ subroutine sysdyn(x,t,dt,iter,x_p)
     real(8)                                   :: dt          ! Time step
     real(8), dimension(2,1)                   :: eta         ! Position state
     real(8), dimension(2,1)                   :: eta_p       ! Time derivative of position state
+    real(8)                                   :: f_ramp      ! Ramp function multiplying rotor thrust []
     real(8), dimension(2,1)                   :: Fwind       ! Vector with wind loads
     real(8)                                   :: Idt         ! Drivetrain inertia about rotor axis [kg.m^2]
     real(8), dimension(2,2)                   :: Minv        ! Inverse of Mrb+Add
@@ -335,7 +339,12 @@ subroutine sysdyn(x,t,dt,iter,x_p)
 
     
     Fwind(1,1) = Th_hist(k_time)
-    Fwind(2,1) = Th_hist(k_time)*Zhub  
+    Fwind(2,1) = Th_hist(k_time)*cos(eta(2,1))*Zhub  
+    
+    check_ramp: if (t <= t_ramp) then
+        f_ramp = t/t_ramp
+        Fwind(:,1) = Fwind(:,1)*f_ramp
+    end if check_ramp
     
     ! Inversion of Mrb + Add
 	Minv = Mrb + Add

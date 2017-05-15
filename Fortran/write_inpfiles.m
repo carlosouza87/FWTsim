@@ -53,6 +53,11 @@ line_str = num2str(dt);
 fprintf(fid2,[line_str '\n']);
 line_str = num2str(t_clutch);
 fprintf(fid2,[line_str '\n']);
+if t_ramp < dt
+    t_ramp = dt;
+end
+line_str = num2str(t_ramp);
+fprintf(fid2,[line_str '\n']);
 
 % Write initial states
 % Initial position (eta0)
